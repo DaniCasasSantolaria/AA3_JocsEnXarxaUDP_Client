@@ -13,6 +13,7 @@ private:
 	float angularAcceleration;
 	float linearDrag;
 	float angularDrag;
+	float gravity = 0.0f;
 public:
 	Rigidbody(Transform* transform)
 		: transform(transform),
@@ -30,6 +31,7 @@ public:
 	inline void SetVelocity(Vector2 velocity) { this->velocity = velocity; }
 	inline void SetLinearDrag(float linearDrag) { this->linearDrag = linearDrag; }
 	inline void SetAngularDrag(float angularDrag) { this->angularDrag = angularDrag; }
+	inline void SetGravity(float gravity) { this->gravity = gravity; }
 
 	~Rigidbody() {
 		for (AABB* col : colliders)
