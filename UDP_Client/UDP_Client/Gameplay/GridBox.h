@@ -10,7 +10,7 @@ protected:
     bool isLeftMouseDown = false;
 public:
     bool isEmpty = true;
-    int playerID = -1;
+    short playerID = -1;
     std::function<void()> action;   //Fa la mateixa funció que el butó
 
     GridBox(const std::string& path, Vector2 sourceOffset, Vector2 sourceSize)

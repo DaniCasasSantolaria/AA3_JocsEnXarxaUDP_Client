@@ -24,31 +24,42 @@ struct PlayerInfo {
     int score;
 };
 
+#define MAX_PLAYERS 4
+
+
+sf::Packet& operator <<(sf::Packet& packet, packetType type);
+sf::Packet& operator <<(sf::Packet& packet, authResult result);
+sf::Packet& operator <<(sf::Packet& packet, lobbyResult result);
+
+sf::Packet& operator >>(sf::Packet& packet, packetType& type);
+sf::Packet& operator >>(sf::Packet& packet, authResult& result);
+sf::Packet& operator >>(sf::Packet& packet, lobbyResult& result);
+
 // Gestor de paquetes de red
 // Responsable de manejar toda la comunicación TCP/IP del cliente
 class PacketManager {
 private:
     // Constantes de configuración de red
-    unsigned const int LISTENER_PORT = 55007; // Port 
-    const sf::IpAddress SERVER_IP = sf::IpAddress(10, 8, 0, 2); // IP
+    unsigned const short LISTENER_PORT = 55007; // Port
+    const sf::IpAddress SERVER_IP = sf::IpAddress(192, 168, 1, 130); // IP
 
     // Sockets de comunicación
     sf::TcpSocket socket;
     sf::TcpListener myListener;
-    std::map<int, sf::TcpSocket*> peerSockets;
+    std::map<short, sf::TcpSocket*> peerSockets;
     std::vector<sf::TcpSocket*> pendingAccepts;
 
     // Estado de conexión
-    int myIndex = -1;
-    int totalPlayers = 0;
+    short myIndex = -1;
+    unsigned short totalPlayers = 0;
     bool serverConnected = false;
     bool p2pReady = false;
     std::string currentLobbyId;
-	    
+
     // Colas de eventos pendientes de procesar
-    std::queue<std::pair<int, sf::Packet>> pendingActions;
-    std::queue<std::pair<int, PlayerInfo>> pendingPlayerInfo;
-    std::queue<int> pendingDisconnects;
+    std::queue<std::pair<short, sf::Packet>> pendingActions;
+    std::queue<std::pair<short, PlayerInfo>> pendingPlayerInfo;
+    std::queue<short> pendingDisconnects;
 
     PacketManager() = default;
     PacketManager(PacketManager&) = delete;
@@ -61,24 +72,24 @@ public:
         return &instance;
     }
 
-	// Flag para ocultar botones en la sala
+    // Flag para ocultar botones en la sala
     bool hideAllButtons = false;
 
     // Struct para almacenar información de ranking
     struct PlayerScore {
         std::string name;
         int score;
-        int position;
+        unsigned short position;
     };
 
     // Variables públicas del juego
     std::vector<PlayerScore> ranking = std::vector<PlayerScore>();
     std::string myUsername;
-	PlayerInfo playerInfo;
-    int finalRanking[4] = { -1, -1, -1, -1 };
-    int finishedCount = 0;
-    std::string allUsernames[4];
-    std::vector<int> disconnectedPlayers;
+    PlayerInfo playerInfo;
+    short finalRanking[MAX_PLAYERS] = { -1, -1, -1, -1 };
+    unsigned short finishedCount = 0;
+    std::string allUsernames[MAX_PLAYERS];
+    std::vector<short> disconnectedPlayers;
 
     bool ConnectToServer();
     void DisconnectFromServer();
@@ -105,38 +116,38 @@ public:
 
     void SendToPeers(sf::Packet& packet);
     inline bool HasPendingAction() const { return !pendingActions.empty(); }
-    std::pair<int, sf::Packet> PopPendingAction();
+    std::pair<short, sf::Packet> PopPendingAction();
 
     void SendPlayerInfoToAll();
     void SendGreetingToAll();
     inline bool HasPendingPlayerInfo() const { return !pendingPlayerInfo.empty(); }
-    std::pair<int, PlayerInfo> PopPendingPlayerInfo();
+    std::pair<short, PlayerInfo> PopPendingPlayerInfo();
 
-    inline int GetMyIndex() const { return myIndex; }
-    inline int GetTotalPlayers() const { return totalPlayers; }
+    inline short GetMyIndex() const { return myIndex; }
+    inline unsigned short GetTotalPlayers() const { return totalPlayers; }
     inline bool IsP2PReady() const { return p2pReady; }
-	inline bool IsPeerConnected(int playerID) const { return peerSockets.find(playerID) != peerSockets.end(); }
-    inline bool HasFinished(int playerID) const {
-        for (int i = 0; i < finishedCount; i++)
+    inline bool IsPeerConnected(short playerID) const { return peerSockets.find(playerID) != peerSockets.end(); }
+    inline bool HasFinished(short playerID) const {
+        for (unsigned short i = 0; i < finishedCount; i++)
             if (finalRanking[i] == playerID) return true;
         return false;
     }
-    inline bool IsDisconnected(int playerID) const {
-        for (int id : disconnectedPlayers)
+    inline bool IsDisconnected(short playerID) const {
+        for (short id : disconnectedPlayers)
             if (id == playerID) return true;
         return false;
     }
-    inline int GetFinishedCount() const { return finishedCount; }
+    inline unsigned short GetFinishedCount() const { return finishedCount; }
     inline bool HasPendingDisconnect() const { return !pendingDisconnects.empty(); }
-    int PopPendingDisconnect();
+    short  PopPendingDisconnect();
 
-    void RecordWinner(int playerID);
+    void RecordWinner(short playerID);
 
-	void SendTurnAction(int row, int col, int playerID);
-    inline std::map<int, sf::TcpSocket*> GetPeerSockets() const { return peerSockets; }
+    void SendTurnAction(short row, short col, short playerID);
+    inline std::map<short, sf::TcpSocket*> GetPeerSockets() const { return peerSockets; }
 
     void DisconnectPeers();
 
-    void SendWinNotificationToAll(int idPlayer);
+    void SendWinNotificationToAll(short idPlayer);
     void SendGameResult();
 };

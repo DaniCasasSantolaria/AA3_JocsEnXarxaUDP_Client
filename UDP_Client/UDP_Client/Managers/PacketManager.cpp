@@ -3,22 +3,34 @@
 
 #include <iostream>
 
+sf::Packet& operator <<(sf::Packet& packet, packetType type) {
+	return packet << static_cast<short>(type);
+}
+
+sf::Packet& operator <<(sf::Packet& packet, authResult result) {
+	return packet << static_cast<short>(result);
+}
+
+sf::Packet& operator <<(sf::Packet& packet, lobbyResult result) {
+	return packet << static_cast<short>(result);
+}
+
 sf::Packet& operator >>(sf::Packet& packet, packetType& type) {
-	int temp;
+	short  temp;
 	packet >> temp;
 	type = static_cast<packetType>(temp);
 	return packet;
 }
 
 sf::Packet& operator >>(sf::Packet& packet, authResult& result) {
-	int temp;
+	short  temp;
 	packet >> temp;
 	result = static_cast<authResult>(temp);
 	return packet;
 }
 
 sf::Packet& operator >>(sf::Packet& packet, lobbyResult& result) {
-	int temp;
+	short  temp;
 	packet >> temp;
 	result = static_cast<lobbyResult>(temp);
 	return packet;
@@ -82,13 +94,13 @@ void PacketManager::Update() {
 			case PEER_LIST:
 				PeerListHandler(packet);
 				break;
-			default: 
+			default:
 				break;
 			}
 			packet.clear();
 		}
 	}
-	
+
 	// Aceptar conexiones P2P
 	if (!p2pReady) {
 		if (myListener.getLocalPort() != 0)
@@ -103,12 +115,12 @@ void PacketManager::Update() {
 			}
 		}
 	}
-	
+
 	// Identificar conexiones P2P entrantes
 	for (std::vector<sf::TcpSocket*>::iterator it = pendingAccepts.begin(); it != pendingAccepts.end(); ) {
 		sf::Packet hello;
 		if ((*it)->receive(hello) == sf::Socket::Status::Done) {
-			int peerIdx;
+			short peerIdx;
 			hello >> peerIdx;
 			peerSockets[peerIdx] = *it;
 			std::cout << "Peer " << peerIdx << " identified (incoming connection)" << std::endl;
@@ -118,7 +130,7 @@ void PacketManager::Update() {
 			++it;
 		}
 	}
-	
+
 	// Verificar si P2P está listo
 	if (!p2pReady && totalPlayers > 0
 		&& peerSockets.size() == totalPlayers - 1
@@ -129,12 +141,12 @@ void PacketManager::Update() {
 		std::cout << "P2P mesh ready. Own index: " << myIndex << std::endl;
 		SM.SetNextScene("Gameplay");
 	}
-	
+
 	// Recibir paquetes de P2P
 	if (p2pReady) {
-		std::vector<int> disconnectedPeers;
+		std::vector<short> disconnectedPeers;
 
-		for (std::pair<const int, sf::TcpSocket*>& entry : peerSockets) {
+		for (std::pair<const short, sf::TcpSocket*>& entry : peerSockets) {
 			sf::Packet p;
 			sf::Socket::Status status = entry.second->receive(p);
 			if (status == sf::Socket::Status::Done) {
@@ -150,7 +162,7 @@ void PacketManager::Update() {
 					pendingPlayerInfo.push({ entry.first, info });
 				}
 				else if (type == WIN_NOTIFICATION) {
-					int idPlayer;
+					short idPlayer;
 					p >> idPlayer;
 					std::cout << "Win notification received from player " << idPlayer << std::endl;
 				}
@@ -158,7 +170,7 @@ void PacketManager::Update() {
 					std::cout << "Received unknown packet type from peer " << entry.first << std::endl;
 				}
 			}
-			else if(status == sf::Socket::Status::Disconnected) {
+			else if (status == sf::Socket::Status::Disconnected) {
 				std::cout << "Peer " << entry.first << " disconnected" << std::endl;
 				disconnectedPeers.push_back(entry.first);
 				disconnectedPlayers.push_back(entry.first);
@@ -168,7 +180,7 @@ void PacketManager::Update() {
 			}
 		}
 
-		for(int i : disconnectedPeers) {
+		for (short i : disconnectedPeers) {
 			peerSockets.erase(i);
 		}
 	}
@@ -372,7 +384,7 @@ void PacketManager::RankingRequest() {
 
 // Procesa instrucción del servidor para abrir listener P2P, extrae índice de cliente y ID de sala
 void PacketManager::OpenListenerHandler(sf::Packet& data) {
-	int index;
+	short index;
 	std::string lobbyId;
 	data >> index >> lobbyId;
 
@@ -382,7 +394,7 @@ void PacketManager::OpenListenerHandler(sf::Packet& data) {
 	myListener.setBlocking(false);
 	myListener.listen(0);
 
-	int port = myListener.getLocalPort();
+	unsigned short port = myListener.getLocalPort();
 
 	sf::Packet response;
 	response << CLIENT_PORT << lobbyId << port;
@@ -393,29 +405,30 @@ void PacketManager::OpenListenerHandler(sf::Packet& data) {
 
 // Procesa lista de P"P del servidor para establecer conexiones
 void PacketManager::PeerListHandler(sf::Packet& data) {
-	int myIdx, total;
+	short myIdx, total;
 	data >> myIdx >> total;
 
 	myIndex = myIdx;
 	totalPlayers = total;
 
 	finishedCount = 0;
-	for (int i = 0; i < 4; i++) finalRanking[i] = -1;
-	for (int i = 0; i < 4; i++) allUsernames[i] = "";
+	for (unsigned short i = 0; i < 4; i++) finalRanking[i] = -1;
+	for (unsigned short i = 0; i < 4; i++) allUsernames[i] = "";
 	allUsernames[myIndex] = myUsername;
 	disconnectedPlayers.clear();
 	while (!pendingDisconnects.empty()) pendingDisconnects.pop();
 
-	for (int i = 0; i < total; i++) {
+	for (unsigned short i = 0; i < total; i++) {
 		std::string ip;
-		int port, peerIdx;
+		unsigned short port;
+		short peerIdx;
 		data >> ip >> port >> peerIdx;
 
 		if (peerIdx >= myIndex) continue;
 
 		if (peerIdx < myIndex) {
 			sf::TcpSocket* s = new sf::TcpSocket();
-			if (s->connect(sf::IpAddress::resolve(ip).value(), (unsigned short)port) == sf::Socket::Status::Done) {
+			if (s->connect(sf::IpAddress::resolve(ip).value(), port) == sf::Socket::Status::Done) {
 				s->setBlocking(false);
 				sf::Packet hello;
 				hello << myIndex;
@@ -438,7 +451,7 @@ void PacketManager::PeerListHandler(sf::Packet& data) {
 
 // Envía un paquete a todos los jugadores conectados, itera sobre todos los sockets de lso juagadores e intenta enviar el paquete
 void PacketManager::SendToPeers(sf::Packet& packet) {
-	for(std::map<int, sf::TcpSocket*>::iterator it = peerSockets.begin(); it != peerSockets.end(); ++it) {
+	for (std::map<short, sf::TcpSocket*>::iterator it = peerSockets.begin(); it != peerSockets.end(); ++it) {
 		if (it->second->send(packet) == sf::Socket::Status::Done) {
 			std::cout << "Sent packet to peer " << it->first << std::endl;
 		}
@@ -449,8 +462,8 @@ void PacketManager::SendToPeers(sf::Packet& packet) {
 }
 
 // Extrae y retorna la siguiente acción de juego pendiente de la cola, contiene el índice del jugador que envió la acción y el paquete con datos
-std::pair<int, sf::Packet> PacketManager::PopPendingAction() {
-	std::pair<int, sf::Packet> front = pendingActions.front();
+std::pair<short, sf::Packet> PacketManager::PopPendingAction() {
+	std::pair<short, sf::Packet> front = pendingActions.front();
 	pendingActions.pop();
 	return front;
 }
@@ -477,14 +490,14 @@ void PacketManager::SendGreetingToAll() {
 }
 
 // Extrae y retorna la siguiente información de jugador pendiente de la cola, contiene el índice del jugador y su información (usuario y puntuación)
-std::pair<int, PlayerInfo> PacketManager::PopPendingPlayerInfo() {
-	std::pair<int, PlayerInfo> front = pendingPlayerInfo.front();
+std::pair<short, PlayerInfo> PacketManager::PopPendingPlayerInfo() {
+	std::pair<short, PlayerInfo> front = pendingPlayerInfo.front();
 	pendingPlayerInfo.pop();
 	return front;
 }
 
 // Envía acción de turno (movimiento) a todos los jugadores, incluye fila, columna e ID del jugador que realiza la acción
-void PacketManager::SendTurnAction(int row, int col, int playerID) {
+void PacketManager::SendTurnAction(short row, short col, short playerID) {
 	sf::Packet packet;
 	packetType type = TURN_ACTION;
 	packet << type << row << col << playerID;
@@ -494,7 +507,7 @@ void PacketManager::SendTurnAction(int row, int col, int playerID) {
 // Desconecta todos los jugadores P2P activos, libera memoria de sockets y limpia estructuras de datos P2P
 void PacketManager::DisconnectPeers()
 {
-	for (std::pair<const int, sf::TcpSocket*>& entry : peerSockets) {
+	for (std::pair<const short, sf::TcpSocket*>& entry : peerSockets) {
 		entry.second->disconnect();
 		delete entry.second;
 	}
@@ -512,7 +525,7 @@ void PacketManager::DisconnectPeers()
 }
 
 // Envía notificación de victoria a todos los jugadores, incluye el ID del jugador que ganó la partida
-void PacketManager::SendWinNotificationToAll(int idPlayer)
+void PacketManager::SendWinNotificationToAll(short idPlayer)
 {
 	sf::Packet packet;
 	packetType type = WIN_NOTIFICATION;
@@ -522,7 +535,7 @@ void PacketManager::SendWinNotificationToAll(int idPlayer)
 }
 
 // Registra a un jugador como finalizado en la partida, almacena su ID en el ranking final y incrementa contador
-void PacketManager::RecordWinner(int playerID)
+void PacketManager::RecordWinner(short playerID)
 {
 	if (HasFinished(playerID)) return;
 	finalRanking[finishedCount] = playerID;
@@ -531,9 +544,9 @@ void PacketManager::RecordWinner(int playerID)
 }
 
 // Extrae y retorna el siguiente ID de jugador desconectado de la cola
-int PacketManager::PopPendingDisconnect()
+short PacketManager::PopPendingDisconnect()
 {
-	int id = pendingDisconnects.front();
+	short id = pendingDisconnects.front();
 	pendingDisconnects.pop();
 	return id;
 }
@@ -545,13 +558,14 @@ void PacketManager::SendGameResult()
 	packetType type = GAME_RESULT;
 	packet << type << currentLobbyId << finishedCount;
 	std::cout << "SendGameResult: lobby=" << currentLobbyId << " finishedCount=" << finishedCount << std::endl;
-	for (int i = 0; i < finishedCount; i++) {
+	for (unsigned short i = 0; i < finishedCount; i++) {
 		std::cout << "  [" << i << "] playerID=" << finalRanking[i] << " username=" << allUsernames[finalRanking[i]] << std::endl;
 		packet << allUsernames[finalRanking[i]];
 	}
 	if (socket.send(packet) != sf::Socket::Status::Done) {
 		std::cerr << "Failed to send game result" << std::endl;
-	} else {
+	}
+	else {
 		std::cout << "Game result sent for lobby " << currentLobbyId << std::endl;
 	}
 }
@@ -561,7 +575,7 @@ void PacketManager::Release() {
 	if (serverConnected) {
 		DisconnectFromServer();
 	}
-	for (std::pair<const int, sf::TcpSocket*>& entry : peerSockets) {
+	for (std::pair<const short, sf::TcpSocket*>& entry : peerSockets) {
 		entry.second->disconnect();
 		delete entry.second;
 	}
