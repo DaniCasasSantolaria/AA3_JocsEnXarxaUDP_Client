@@ -4,19 +4,19 @@
 
 class AnimatedImageRenderer : public ImageRenderer {
 private:
-    int frameWidth;
-    int frameHeight;
-    int fps;
+    short frameWidth;
+    short frameHeight;
+    short fps;
     bool looping;
     float frameTime;
     float currentFrameTime;
-    int rows;
-    int columns;
+    short rows;
+    short columns;
     Vector2 currentFrame{ 1.0f, 1.0f };
 public:
-    AnimatedImageRenderer(int frameWidth, int frameHeight,
-        int fps, bool looping, float frameTime,
-        Transform* transform, std::string resourcePath, Vector2 sourceOffset, Vector2 sourceSize, int rows, int columns)
+    AnimatedImageRenderer(short frameWidth, short frameHeight,
+        short fps, bool looping, float frameTime,
+        Transform* transform, std::string resourcePath, Vector2 sourceOffset, Vector2 sourceSize, short rows, short columns)
         : ImageRenderer(transform, resourcePath, sourceOffset, sourceSize),
         frameWidth(frameWidth), frameHeight(frameHeight), fps(fps), looping(looping), frameTime(frameTime), rows(rows), columns(columns) {
         this->color = color;

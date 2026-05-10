@@ -41,7 +41,7 @@ class PacketManager {
 private:
     // Constantes de configuración de red
     unsigned const short LISTENER_PORT = 55007; // Port
-    const sf::IpAddress SERVER_IP = sf::IpAddress(192, 168, 1, 130); // IP
+    const sf::IpAddress SERVER_IP = sf::IpAddress(192, 168, 50, 124); // IP
 
     // Sockets de comunicación
     sf::TcpSocket socket;

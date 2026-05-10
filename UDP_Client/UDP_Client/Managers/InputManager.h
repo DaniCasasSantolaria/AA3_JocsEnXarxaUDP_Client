@@ -1,5 +1,6 @@
 #pragma once
 #include <SFML/Window.hpp>
+#include <SFML/Window/Keyboard.hpp>
 #include <unordered_map>
 #include <string>
 #include "../TextObject.h"
@@ -33,7 +34,7 @@ public:
     inline int GetMouseY() const { return mouseY; }
     inline bool GetLeftClick() const { return lastTimeClick <= 0.001f; }
     inline bool GetHoldClick() const { return leftClick; }
-    inline bool GetEvent(int input, KeyState inputValue) { return keyReference[input] == inputValue; }
+    inline bool GetEvent(sf::Keyboard::Key input, KeyState inputValue) { return keyReference[static_cast<int>(input)] == inputValue; }
     inline void SetPlaying(bool isPlaying) { this->playing = isPlaying; }
     inline bool GetPlaying() const { return playing; }
     inline std::string GetInputText() const { return inputText; }
