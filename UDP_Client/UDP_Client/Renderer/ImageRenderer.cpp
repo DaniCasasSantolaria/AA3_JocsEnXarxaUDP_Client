@@ -37,7 +37,7 @@ void ImageRenderer::Render() {
 			}
 		);
 
-		//sprite.setTextureRect(texRect);
+		sprite.setTextureRect(texRect);
 	}
 
 	// Usar el tamaño real del sprite tras aplicar textureRect

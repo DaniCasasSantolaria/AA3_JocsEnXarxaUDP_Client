@@ -5,6 +5,7 @@
 #include <iostream>
 #include "Managers/InputManager.h"
 #include "Managers/PacketManager.h"
+#include "Maps/TileMap.h"
 
 #define GRID_WIDTH 1000.0f
 #define GRID_HEIGHT 800.0f
@@ -34,92 +35,8 @@ void Gameplay::OnEnter() {
     float width = GRID_WIDTH / MAX_COLS;
     float height = GRID_HEIGHT / MAX_ROWS;
 
-
-    //Tablero
-    for (unsigned short row = 0; row < MAX_ROWS; row++) {
-        for (unsigned short col = 0; col < MAX_COLS; col++) {
-
-            grid[row][col] = new GridBox("resources/Gameplay/Grid.png", Vector2{ 0, 0 }, Vector2{ width, height });
-            grid[row][col]->SetAction([this, row, col]() {
-                OnGridBoxPressed(row, col);
-                });
-            grid[row][col]->GetTransform()->position = { GRID_OFFSET_X + col * width + width / 2.0f, GRID_OFFSET_Y + row * height + height / 2.0f };
-            grid[row][col]->GetTransform()->scale = { 1.0f, 1.0f };
-            grid[row][col]->isEmpty = true;
-            grid[row][col]->playerID = -1;
-
-            SPAWN.SpawnObject(grid[row][col]);
-        }
-    }
-
-    Object* gridBackground = new ImageObject("resources/Gameplay/GridBackground.png", Vector2{ 0, 0 }, Vector2{ GRID_WIDTH + 35, GRID_HEIGHT + 35 });
-    gridBackground->GetTransform()->position = { GRID_OFFSET_X + GRID_WIDTH / 2.0f, GRID_OFFSET_Y + GRID_HEIGHT / 2.0f };
-    gridBackground->GetTransform()->scale = { 1.0f, 1.0f };
-    SPAWN.SpawnObject(gridBackground);
-
-
-    Object* player1Info = new ImageObject("resources/Gameplay/CirclePlayerRectangle.png", Vector2{ 0, 0 }, Vector2{ 300, 100 });
-    player1Info->GetTransform()->position = { 200, 100 };
-    player1Info->GetTransform()->scale = { 1.0f, 1.0f };
-    SPAWN.SpawnObject(player1Info);
-
-    Object* player2Info = new ImageObject("resources/Gameplay/TrianglePlayerRectangle.png", Vector2{ 0, 0 }, Vector2{ 300, 100 });
-    player2Info->GetTransform()->position = { 200, 250 };
-    player2Info->GetTransform()->scale = { 1.0f, 1.0f };
-    SPAWN.SpawnObject(player2Info);
-
-    Object* player3Info = new ImageObject("resources/Gameplay/SquarePlayerRectangle.png", Vector2{ 0, 0 }, Vector2{ 300, 100 });
-    player3Info->GetTransform()->position = { 200, 400 };
-    player3Info->GetTransform()->scale = { 1.0f, 1.0f };
-    SPAWN.SpawnObject(player3Info);
-
-    Object* player4Info = new ImageObject("resources/Gameplay/CrossPlayerRectangle.png", Vector2{ 0, 0 }, Vector2{ 300, 100 });
-    player4Info->GetTransform()->position = { 200, 550 };
-    player4Info->GetTransform()->scale = { 1.0f, 1.0f };
-    SPAWN.SpawnObject(player4Info);
-
-    const float playersNameScale = 1.9f;
-    const float playersScoreScale = 1.4f;
-
-    playerInfoText[0] = new TextObject(usernamesByIndex[0], sf::Color{ 255,255,255 });
-    playerInfoText[0]->GetTransform()->scale = Vector2(playersNameScale, playersNameScale);
-    playerInfoText[0]->GetTransform()->position = Vector2(240.0f, 80.0f);
-    SPAWN.SpawnObject(playerInfoText[0]);
-
-    playerInfoText[1] = new TextObject(usernamesByIndex[1], sf::Color{ 255,255,255 });
-    playerInfoText[1]->GetTransform()->scale = Vector2(playersNameScale, playersNameScale);
-    playerInfoText[1]->GetTransform()->position = Vector2(240.0f, 230.0f);
-    SPAWN.SpawnObject(playerInfoText[1]);
-
-    playerInfoText[2] = new TextObject(usernamesByIndex[2], sf::Color{ 255,255,255 });
-    playerInfoText[2]->GetTransform()->scale = Vector2(playersNameScale, playersNameScale);
-    playerInfoText[2]->GetTransform()->position = Vector2(240.0f, 380.0f);
-    SPAWN.SpawnObject(playerInfoText[2]);
-
-    playerInfoText[3] = new TextObject(usernamesByIndex[3], sf::Color{ 255,255,255 });
-    playerInfoText[3]->GetTransform()->scale = Vector2(playersNameScale, playersNameScale);
-    playerInfoText[3]->GetTransform()->position = Vector2(240.0f, 530.0f);
-    SPAWN.SpawnObject(playerInfoText[3]);
-
-    scoreInfoText[0] = new TextObject(std::to_string(scoreByIndex[0]), sf::Color{ 255,255,255 });
-    scoreInfoText[0]->GetTransform()->scale = Vector2(playersScoreScale, playersScoreScale);
-    scoreInfoText[0]->GetTransform()->position = Vector2(240.0f, 115.0f);
-    SPAWN.SpawnObject(scoreInfoText[0]);
-
-    scoreInfoText[1] = new TextObject(std::to_string(scoreByIndex[1]), sf::Color{ 255,255,255 });
-    scoreInfoText[1]->GetTransform()->scale = Vector2(playersScoreScale, playersScoreScale);
-    scoreInfoText[1]->GetTransform()->position = Vector2(240.0f, 265.0f);
-    SPAWN.SpawnObject(scoreInfoText[1]);
-
-    scoreInfoText[2] = new TextObject(std::to_string(scoreByIndex[2]), sf::Color{ 255,255,255 });
-    scoreInfoText[2]->GetTransform()->scale = Vector2(playersScoreScale, playersScoreScale);
-    scoreInfoText[2]->GetTransform()->position = Vector2(240.0f, 415.0f);
-    SPAWN.SpawnObject(scoreInfoText[2]);
-
-    scoreInfoText[3] = new TextObject(std::to_string(scoreByIndex[3]), sf::Color{ 255,255,255 });
-    scoreInfoText[3]->GetTransform()->scale = Vector2(playersScoreScale, playersScoreScale);
-    scoreInfoText[3]->GetTransform()->position = Vector2(240.0f, 565.0f);
-    SPAWN.SpawnObject(scoreInfoText[3]);
+    TileMap tileMap;
+    tileMap.LoadFromFile("resources/Maps/1/Map1.txt");
 }
 
 void Gameplay::OnExit() {

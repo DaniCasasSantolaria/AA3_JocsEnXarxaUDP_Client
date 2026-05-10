@@ -47,6 +47,9 @@ void Game::Init() {
 	RM->LoadTexture("resources/Gameplay/TrianglePlayerRectangle.png");
 	RM->LoadTexture("resources/Gameplay/SquarePlayerRectangle.png");
 	RM->LoadTexture("resources/Gameplay/CrossPlayerRectangle.png");
+
+	RM->LoadTexture("resources/Tilesets/world_tileset.png");
+	RM->LoadTexture("resources/Tilesets/platforms.png");
 	
 	//Backgrounds
 	RM->LoadTexture("resources/Login/Fondo.png");
@@ -71,7 +74,7 @@ void Game::Init() {
 	//assert(SM.AddScene("Ranking Screen", new RankingScreen()));*/
 
 	//INIT FIRST SCENE
-	SM.InitFirstScene("Login");
+	SM.InitFirstScene("Gameplay");
 }
 
 void Game::Update() {

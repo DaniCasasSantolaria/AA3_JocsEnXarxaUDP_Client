@@ -161,6 +161,7 @@
     <ClCompile Include="scenes\Login.cpp" />
     <ClCompile Include="scenes\RankingScreen.cpp" />
     <ClCompile Include="SplashScreen.cpp" />
+    <ClCompile Include="Maps\TileMap.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AABB.h" />
@@ -201,6 +202,7 @@
     <ClInclude Include="Spawner.h" />
     <ClInclude Include="SplashScreen.h" />
     <ClInclude Include="TextObject.h" />
+    <ClInclude Include="Maps\TileMap.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="Vector2.h" />
   </ItemGroup>
