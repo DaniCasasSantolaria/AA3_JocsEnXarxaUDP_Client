@@ -72,9 +72,6 @@
     <ClCompile Include="player\Player.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="player\Spaceship.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Renderer\AnimatedImageRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -186,9 +183,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="player\Player.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="player\Spaceship.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\AnimatedImageRenderer.h">

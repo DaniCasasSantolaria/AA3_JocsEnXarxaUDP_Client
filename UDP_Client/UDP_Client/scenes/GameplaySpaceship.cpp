@@ -1,5 +1,4 @@
 #include "GameplaySpaceship.h"
-#include "../player/Spaceship.h"
 #include "../Spawner.h"
 #include "../Managers/InputManager.h"
 #include "../Managers/SceneManager.h"

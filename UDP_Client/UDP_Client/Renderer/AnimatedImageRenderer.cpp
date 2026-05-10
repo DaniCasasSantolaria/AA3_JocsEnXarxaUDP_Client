@@ -1,31 +1,42 @@
 #include "AnimatedImageRenderer.h"
 
-void AnimatedImageRenderer::Update(float dt) {
-	ImageRenderer::Update(dt);
-	if (currentFrameTime >= frameTime) {
-		currentFrameTime = 0;
+void AnimatedImageRenderer::SetAnimation(short row, short totalFrames) {
+	if (currentAnimationRow == row && currentAnimationFrames == totalFrames) {
+        return;
+    }
 
-		if (currentFrame.x < columns && currentFrame.y >= rows) {
-			sourceRect.position.y += frameHeight;
-			sourceRect.position.x = 0;
-			currentFrame.x++;
-			currentFrame.y = 1;
-		}
-		else if (currentFrame.y < rows) {
-			sourceRect.position.x += frameWidth;
-			currentFrame.y++;
-		}
-		else if (looping && currentFrame.y == rows && currentFrame.x == columns) {
-			sourceRect.position.x = 0;
-			sourceRect.position.y = 0;
-			currentFrame.y = 1;
-			currentFrame.x = 1;
-		}
-	}
-	else
-		currentFrameTime += dt;
+    currentAnimationRow = row;
+    currentAnimationFrames = totalFrames;
+
+    currentFrame.x = 0;
+    currentFrame.y = row;
+
+    currentFrameTime = 0.0f;
+
+    sourceRect.position.x = 0;
+    sourceRect.position.y = row * frameHeight;
 }
 
-void AnimatedImageRenderer::Render() {
-	//SDL_RenderCopy(RM->GetRenderer(), RM->GetTexture(targetPath), &sourceRect, &destRect);
+void AnimatedImageRenderer::Update(float dt) {
+    ImageRenderer::Update(dt);
+
+    currentFrameTime += dt;
+
+    if (currentFrameTime >= frameTime) {
+        currentFrameTime = 0.0f;
+
+        currentFrame.x++;
+
+        if (currentFrame.x >= currentAnimationFrames) {
+            if (looping) {
+                currentFrame.x = 0;
+            }
+            else {
+                currentFrame.x = currentAnimationFrames - 1;
+            }
+        }
+
+        sourceRect.position.x = currentFrame.x * frameWidth;
+        sourceRect.position.y = currentAnimationRow * frameHeight;
+    }
 }

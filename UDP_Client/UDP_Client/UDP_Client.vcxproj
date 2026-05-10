@@ -151,7 +151,6 @@
     <ClCompile Include="MenuElements\SpriteSelectorImage.cpp" />
     <ClCompile Include="MenuElements\VolumeButton.cpp" />
     <ClCompile Include="player\Player.cpp" />
-    <ClCompile Include="player\Spaceship.cpp" />
     <ClCompile Include="Renderer\AnimatedImageRenderer.cpp" />
     <ClCompile Include="Renderer\ImageRenderer.cpp" />
     <ClCompile Include="Rigidbody.cpp" />
@@ -187,7 +186,6 @@
     <ClInclude Include="MenuElements\VolumeButton.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="player\Player.h" />
-    <ClInclude Include="player\Spaceship.h" />
     <ClInclude Include="Renderer\AnimatedImageRenderer.h" />
     <ClInclude Include="Renderer\ImageRenderer.h" />
     <ClInclude Include="Renderer\Renderer.h" />
