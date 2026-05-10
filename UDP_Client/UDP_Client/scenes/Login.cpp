@@ -14,51 +14,51 @@ void Login::OnEnter() {
 	SPAWN.SpawnObject(background);
 
 	// Texto usuario
-	usernameTextButton = new Button("", sf::Color{ 18, 113, 230 }, Vector2(0.0f, 0.0f), Vector2(16.0f, 16.0f), "resources/Login/user-button.png");
+	usernameTextButton = new Button("", sf::Color{ 18, 113, 230 }, Vector2(0.0f, 0.0f), Vector2(1400.0f, 220.0f), "resources/Login/user-button.png");
 	usernameTextButton->SetAction([this]() {
 		StartEditingUsername();
 		});
 	usernameTextButton->GetTransform()->scale = Vector2(1.0f, 1.0f);
 	usernameTextButton->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f, RM->WINDOW_HEIGHT / 2.0f - 100.0f);
-	usernameTextButton->GetBackground()->GetTransform()->scale = Vector2(32.0f, 6.0f);
+	usernameTextButton->GetBackground()->GetTransform()->scale = Vector2(1.0f, 1.0f);
 	usernameTextButton->GetBackground()->GetTransform()->position = usernameTextButton->GetTransform()->position;
 	SPAWN.SpawnObject(usernameTextButton->GetBackground());
 	SPAWN.SpawnObject(usernameTextButton);
 
 	// Texto contraseña
-	passwordTextButton = new Button("", sf::Color{ 18, 113, 230 }, Vector2(0.0f, 0.0f), Vector2(16.0f, 16.0f), "resources/Login/Password-button.png");
+	passwordTextButton = new Button("", sf::Color{ 18, 113, 230 }, Vector2(0.0f, 0.0f), Vector2(1400.0f, 220.0f), "resources/Login/Password-button.png");
 	passwordTextButton->SetAction([this]() {
 		StartEditingPassword();
 		});
 	passwordTextButton->GetTransform()->scale = Vector2(1.0f, 1.0f);
 	passwordTextButton->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f, RM->WINDOW_HEIGHT / 2.0f);
-	passwordTextButton->GetBackground()->GetTransform()->scale = Vector2(32.0f, 6.0f);
+	passwordTextButton->GetBackground()->GetTransform()->scale = Vector2(1.0f, 1.0f);
 	passwordTextButton->GetBackground()->GetTransform()->position = passwordTextButton->GetTransform()->position;
 	SPAWN.SpawnObject(passwordTextButton->GetBackground());
 	SPAWN.SpawnObject(passwordTextButton);
 
 	// Botón de login
-	Button* loginButton = new Button("", sf::Color{18, 113, 230}, Vector2(0.0f, 0.0f), Vector2(16.0f, 16.0f), "resources/Login/login-button.png");
+	Button* loginButton = new Button("", sf::Color{18, 113, 230}, Vector2(0.0f, 0.0f), Vector2(660.0f, 140.0f), "resources/Login/login-button.png");
 	loginButton->SetAction([this]() {
 		std::cout << "LOGIN:" << username << "," << password << std::endl;
 		LoginAction();
 		});
 	loginButton->GetTransform()->scale = Vector2(1.0f, 1.0f);
 	loginButton->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f, RM->WINDOW_HEIGHT / 2.0f + 100);
-	loginButton->GetBackground()->GetTransform()->scale = Vector2(25.0f, 6.0f);
+	loginButton->GetBackground()->GetTransform()->scale = Vector2(1.0f, 1.0f);
 	loginButton->GetBackground()->GetTransform()->position = loginButton->GetTransform()->position;
 	SPAWN.SpawnObject(loginButton->GetBackground());
 	SPAWN.SpawnObject(loginButton);
 
 	// Botón de registro
-	Button* registerButton = new Button("", sf::Color{ 18, 113, 230 }, Vector2(0.0f, 0.0f), Vector2(16.0f, 16.0f), "resources/Login/register-button.png");
+	Button* registerButton = new Button("", sf::Color{ 18, 113, 230 }, Vector2(0.0f, 0.0f), Vector2(660.0f, 140.0f), "resources/Login/register-button.png");
 	registerButton->SetAction([this]() {
 		std::cout << "REGISTER" << std::endl;
 		RegisterAction();
 		});
 	registerButton->GetTransform()->scale = Vector2(1.0f, 1.0f);
 	registerButton->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f, RM->WINDOW_HEIGHT / 2.0f + 200);
-	registerButton->GetBackground()->GetTransform()->scale = Vector2(25.0f, 6.0f);
+	registerButton->GetBackground()->GetTransform()->scale = Vector2(1.0f, 1.0f);
 	registerButton->GetBackground()->GetTransform()->position = registerButton->GetTransform()->position;
 	SPAWN.SpawnObject(registerButton->GetBackground());
 	SPAWN.SpawnObject(registerButton);

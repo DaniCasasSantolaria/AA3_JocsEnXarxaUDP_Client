@@ -11,8 +11,8 @@ sf::Packet& operator <<(sf::Packet& packet, authResult result) {
 	return packet << static_cast<short>(result);
 }
 
-sf::Packet& operator <<(sf::Packet& packet, lobbyResult result) {
-	return packet << static_cast<short>(result);
+sf::Packet& operator <<(sf::Packet& packet, matchMode mode) {
+	return packet << static_cast<short>(mode);
 }
 
 sf::Packet& operator >>(sf::Packet& packet, packetType& type) {
@@ -29,10 +29,10 @@ sf::Packet& operator >>(sf::Packet& packet, authResult& result) {
 	return packet;
 }
 
-sf::Packet& operator >>(sf::Packet& packet, lobbyResult& result) {
+sf::Packet& operator >>(sf::Packet& packet, matchMode& mode) {
 	short  temp;
 	packet >> temp;
-	result = static_cast<lobbyResult>(temp);
+	mode = static_cast<matchMode>(temp);
 	return packet;
 }
 
@@ -79,14 +79,10 @@ void PacketManager::Update() {
 			case REGISTER:
 				Register(packet);
 				break;
-			case CREATE_LOBBY:
-				CreateLobby(packet);
-				break;
-			case JOIN_LOBBY:
-				JoinLobby(packet);
-				break;
 			case RANKING:
 				GetRanking(packet);
+			case MATCHMAKE:
+				Matchmake(packet);
 				break;
 			case OPEN_LISTENER:
 				OpenListenerHandler(packet);
@@ -250,6 +246,23 @@ void PacketManager::Register(sf::Packet& data) {
 	}
 }
 
+void PacketManager::Matchmake(sf::Packet& data) {
+	matchMode mode;
+	data >> mode;
+	switch (mode)
+	{
+	case NON_COMPETITIVE:
+		std::cout << "Entered non-competitive matchmaking queue" << std::endl;
+		break;
+	case COMPETITIVE:
+		std::cout << "Entered competitive matchmaking queue" << std::endl;
+		break;
+	default:
+		std::cout << "Unknown matchmaking mode" << std::endl;
+		break;
+	}
+}
+
 // Envía solicitud de login al servidor con usuario y contraseña
 void PacketManager::SendLoginRequest(const std::string& username, const std::string& password) {
 	sf::Packet packet;
@@ -276,54 +289,21 @@ void PacketManager::SendRegisterRequest(const std::string& username, const std::
 	}
 }
 
-// Respuesta de creación de sala del servidor, extrae ID de sala y resultado de operación
-void PacketManager::CreateLobby(sf::Packet& data) {
-	std::string idLobby;
-	lobbyResult result;
+void PacketManager::SendMatchmakeRequest(matchMode mode)
+{
+	hideAllButtons = true;
 
-	data >> idLobby;
-	data >> result;
+	sf::Packet packet;
+	packetType type = MATCHMAKE;
 
-	switch (result) {
-	case LOBBY_CREATED_OK:
-		currentLobbyId = idLobby;
-		hideAllButtons = true;
-		std::cout << "Lobby created: " << idLobby << std::endl;
-		break;
-	case LOBBY_ALREADY_EXISTS:
-		std::cout << "Lobby ID already exists" << std::endl;
-		break;
-	default:
-		std::cout << "Error creating lobby" << std::endl;
-		break;
+	packet << type << mode;
+
+	if (socket.send(packet) != sf::Socket::Status::Done) {
+		std::cerr << "Failed to send matchmaking request to server" << std::endl;
 	}
-}
-
-// Respuesta de entrada a sala del servidor, extrae ID de sala y resultado de operación
-void PacketManager::JoinLobby(sf::Packet& data) {
-	std::string idLobby;
-	lobbyResult result;
-
-	data >> idLobby;
-	data >> result;
-
-	std::cout << "Lobby ID: " << idLobby << std::endl;
-
-	switch (result) {
-	case LOBBY_JOINED_OK:
-		currentLobbyId = idLobby;
-		hideAllButtons = true;
-		std::cout << "Joined lobby: " << idLobby << std::endl;
-		break;
-	case LOBBY_FULL:
-		std::cout << "Lobby is full" << std::endl;
-		break;
-	case LOBBY_NOT_FOUND:
-		std::cout << "Lobby not found" << std::endl;
-		break;
-	default:
-		std::cout << "Error joining lobby" << std::endl;
-		break;
+	else {
+		std::cout << "Matchmaking request sent to server" << std::endl;
+		std::cout << "Mode: " << (mode == COMPETITIVE ? "Competitive" : "NonCompetitive") << std::endl;
 	}
 }
 
@@ -337,34 +317,6 @@ void PacketManager::GetRanking(sf::Packet& data)
 	while (data >> player.name >> player.score >> player.position)
 	{
 		ranking.push_back(player);
-	}
-}
-
-// Envía solicitud de creación de sala al servidor con un ID de sala específico
-void PacketManager::CreateActionRequest(const std::string& idLobby) {
-	sf::Packet packet;
-	packetType type = CREATE_LOBBY;
-	packet << type << idLobby;
-
-	if (socket.send(packet) != sf::Socket::Status::Done) {
-		std::cerr << "Failed to send create lobby data to server" << std::endl;
-	}
-	else {
-		std::cout << "Create lobby data sent to server" << std::endl << idLobby << std::endl;
-	}
-}
-
-// Envía solicitud de entrada a sala al servidor con un ID de sala específico
-void PacketManager::JoinActionRequest(const std::string& idLobby) {
-	sf::Packet packet;
-	packetType type = JOIN_LOBBY;
-	packet << type << idLobby;
-
-	if (socket.send(packet) != sf::Socket::Status::Done) {
-		std::cerr << "Failed to send join lobby data to server" << std::endl;
-	}
-	else {
-		std::cout << "Join lobby data sent to server: " << std::endl;
 	}
 }
 

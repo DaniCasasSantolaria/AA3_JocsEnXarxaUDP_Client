@@ -13,53 +13,39 @@ void Lobby::OnEnter() {
 	background->GetTransform()->scale = { 1.0f, 1.0f };
 	SPAWN.SpawnObject(background);
 
-	// Texto ID de sala
-	idLobbyTextButton = new Button("", sf::Color{ 18, 113, 230 }, Vector2(0.0f, 0.0f), Vector2(16.0f, 16.0f), "resources/Lobby/lobby-button.png");
-	idLobbyTextButton->SetAction([this]() {
-		StartEditingIdLobby();
-		});
-	idLobbyTextButton->GetTransform()->scale = Vector2(1.0f, 1.0f);
-	idLobbyTextButton->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f, RM->WINDOW_HEIGHT / 2.0f - 100.0f);
-	idLobbyTextButton->GetBackground()->GetTransform()->scale = Vector2(32.0f, 6.0f);
-	idLobbyTextButton->GetBackground()->GetTransform()->position = idLobbyTextButton->GetTransform()->position;
-	SPAWN.SpawnObject(idLobbyTextButton->GetBackground());
-	SPAWN.SpawnObject(idLobbyTextButton);
-
 	// Botón para crear sala
-	createButton = new Button("", sf::Color{ 18, 113, 230 }, Vector2(0.0f, 0.0f), Vector2(16.0f, 16.0f), "resources/Lobby/create-button.png");
-	createButton->SetAction([this]() {
-		std::cout << "CREATE LOBBY: " << idLobby << std::endl;
-		CreateAction();
+	noCompetitiveButton = new Button("", sf::Color{ 18, 113, 230 }, Vector2(0.0f, 0.0f), Vector2(660.0f, 140.0f), "resources/Lobby/create-button.png");
+	noCompetitiveButton->SetAction([this]() {
+		NoCompetitiveAction();
 		});
-	createButton->GetTransform()->scale = Vector2(1.0f, 1.0f);
-	createButton->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f, RM->WINDOW_HEIGHT / 2.0f);
-	createButton->GetBackground()->GetTransform()->scale = Vector2(25.0f, 6.0f);
-	createButton->GetBackground()->GetTransform()->position = createButton->GetTransform()->position;
-	SPAWN.SpawnObject(createButton->GetBackground());
-	SPAWN.SpawnObject(createButton);
+	noCompetitiveButton->GetTransform()->scale = Vector2(1.0f, 1.0f);
+	noCompetitiveButton->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f, RM->WINDOW_HEIGHT / 2.0f);
+	noCompetitiveButton->GetBackground()->GetTransform()->scale = Vector2(0.5f, 0.5f);
+	noCompetitiveButton->GetBackground()->GetTransform()->position = noCompetitiveButton->GetTransform()->position;
+	SPAWN.SpawnObject(noCompetitiveButton->GetBackground());
+	SPAWN.SpawnObject(noCompetitiveButton);
 
 	// Botón para unirse a sala
-	joinButton = new Button("", sf::Color{ 18, 113, 230 }, Vector2(0.0f, 0.0f), Vector2(16.0f, 16.0f), "resources/Lobby/join-button.png");
-	joinButton->SetAction([this]() {
-		std::cout << "JOINED LOBBY: " << idLobby << std::endl;
-		JoinAction();
+	competitiveButton = new Button("", sf::Color{ 18, 113, 230 }, Vector2(0.0f, 0.0f), Vector2(660.0f, 140.0f), "resources/Lobby/join-button.png");
+	competitiveButton->SetAction([this]() {
+		CompetitiveAction();
 		});
-	joinButton->GetTransform()->scale = Vector2(1.0f, 1.0f);
-	joinButton->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f, RM->WINDOW_HEIGHT / 2.0f + 100);
-	joinButton->GetBackground()->GetTransform()->scale = Vector2(25.0f, 6.0f);
-	joinButton->GetBackground()->GetTransform()->position = joinButton->GetTransform()->position;
-	SPAWN.SpawnObject(joinButton->GetBackground());
-	SPAWN.SpawnObject(joinButton);
+	competitiveButton->GetTransform()->scale = Vector2(1.0f, 1.0f);
+	competitiveButton->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f, RM->WINDOW_HEIGHT / 2.0f + 100);
+	competitiveButton->GetBackground()->GetTransform()->scale = Vector2(0.5f, 0.5f);
+	competitiveButton->GetBackground()->GetTransform()->position = competitiveButton->GetTransform()->position;
+	SPAWN.SpawnObject(competitiveButton->GetBackground());
+	SPAWN.SpawnObject(competitiveButton);
 
 	// Botón para ver ranking
-	rankingButton = new Button("", sf::Color{ 18, 113, 230 }, Vector2(0.0f, 0.0f), Vector2(16.0f, 16.0f), "resources/Lobby/ranking-button.png");
+	rankingButton = new Button("", sf::Color{ 18, 113, 230 }, Vector2(0.0f, 0.0f), Vector2(660.0f, 140.0f), "resources/Lobby/ranking-button.png");
 	rankingButton->SetAction([this]() {
-		std::cout << "MOVED TO RANKING SCREEN: " << idLobby << std::endl;
+		std::cout << "MOVED TO RANKING SCREEN: " << std::endl;
 		RankingSceneAction();
 		});
 	rankingButton->GetTransform()->scale = Vector2(1.0f, 1.0f);
 	rankingButton->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f, RM->WINDOW_HEIGHT / 2.0f + 200);
-	rankingButton->GetBackground()->GetTransform()->scale = Vector2(25.0f, 6.0f);
+	rankingButton->GetBackground()->GetTransform()->scale = Vector2(1.0f, 1.0f);
 	rankingButton->GetBackground()->GetTransform()->position = rankingButton->GetTransform()->position;
 	SPAWN.SpawnObject(rankingButton->GetBackground());
 	SPAWN.SpawnObject(rankingButton);
@@ -78,26 +64,20 @@ void Lobby::OnExit() {
 void Lobby::Update() {
 	Scene::Update();
 
-	if (activeField == ActiveField::IdLobby) {
-		idLobby = Input.GetInputText();
-	}
-
-	// Actualizar texto
-	if (idLobbyTextButton) {
-		idLobbyTextButton->SetText(idLobby.empty() ? "ID Lobby" : idLobby);
-	}
-
 	// Ocultar botones cuando se entra a una sala o se crea
 	if (PM->hideAllButtons)
 	{
-		createButton->GetBackground()->Destroy();
-		createButton->Destroy();
-		
-		joinButton->GetBackground()->Destroy();
-		joinButton->Destroy();
-		
+		noCompetitiveButton->GetBackground()->Destroy();
+		noCompetitiveButton->Destroy();
+		noCompetitiveButton = nullptr;
+
+		competitiveButton->GetBackground()->Destroy();
+		competitiveButton->Destroy();
+		competitiveButton = nullptr;
+
 		rankingButton->GetBackground()->Destroy();
 		rankingButton->Destroy();
+		rankingButton = nullptr;
 
 		PM->hideAllButtons = false;
 	}
@@ -107,21 +87,12 @@ void Lobby::Render() {
 	Scene::Render();
 }
 
-void Lobby::StartEditingIdLobby() {
-	if (activeField == ActiveField::IdLobby) {
-		idLobby = Input.GetInputText();
-	}
-
-	activeField = ActiveField::IdLobby;
-	Input.SetInputText(idLobby);
+void Lobby::NoCompetitiveAction() {
+	PM->SendMatchmakeRequest(NON_COMPETITIVE);
 }
 
-void Lobby::CreateAction() {
-	PM->CreateActionRequest(idLobby);
-}
-
-void Lobby::JoinAction() {
-	PM->JoinActionRequest(idLobby);
+void Lobby::CompetitiveAction() {
+	PM->SendMatchmakeRequest(COMPETITIVE);
 }
 
 void Lobby::RankingSceneAction()
