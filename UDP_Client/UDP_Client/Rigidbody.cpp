@@ -21,6 +21,7 @@ bool Rigidbody::CheckOverlappingPoint(Vector2 point) {
 
 void Rigidbody::Update(float dt) {
 	//1 -> Update velocity
+	acceleration += Vector2(0, gravity);
 	velocity = velocity + (acceleration * dt);
 	angularVelocity = angularVelocity + angularAcceleration * dt;
 

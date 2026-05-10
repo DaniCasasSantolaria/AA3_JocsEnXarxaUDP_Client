@@ -15,24 +15,24 @@ private:
 
 	int scoreByIndex[MAX_PLAYERS];
 	TextObject* scoreInfoText[MAX_PLAYERS];
-	int myPlayerID = -1;
+	short myPlayerID = -1;
 
 	float currentMoveTime = 0.0f;
 	float maxTimeToMove = 20.0f;
 
-	int currentPlayerIDTurn = 0;
+	short currentPlayerIDTurn = 0;
 
-	int piecesPlaced = 0;
+	unsigned short piecesPlaced = 0;
 
-	int maxPlayers = 0;
+	unsigned short maxPlayers = 0;
 
 	bool gameFinished = false;
 
-	void OnGridBoxPressed(int row, int col);
-	bool IsInside(int row, int col) const;
-	int CountDirection(int row, int col, int dRow, int dCol, int player) const;
-	bool CheckWinCondition(int row, int col);
-	void ChangeGridBox(int row, int col, int playerID);
+	void OnGridBoxPressed(short row, short col);
+	bool IsInside(short row, short col) const;
+	short CountDirection(short row, short col, short dRow, short dCol, short player) const;
+	bool CheckWinCondition(short row, short col);
+	void ChangeGridBox(short row, short col, short playerID);
 
 	inline bool IsMyTurn() const { return myPlayerID == currentPlayerIDTurn; }
 	void ChangeTurn();
