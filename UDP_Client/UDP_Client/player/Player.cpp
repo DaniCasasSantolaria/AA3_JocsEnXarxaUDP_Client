@@ -19,6 +19,42 @@ void Player::OnCollisionEnter(Object* other) {
 	}
 }
 
+void Player::ChangeAnimation(PlayerState newState) {
+	if (currentState == newState) {
+		return;
+	}
+
+	currentState = newState;
+
+	AnimatedImageRenderer* animatedRenderer =
+		dynamic_cast<AnimatedImageRenderer*>(renderer);
+
+	if (animatedRenderer == nullptr) {
+		return;
+	}
+
+	switch (currentState) {
+	case PlayerState::IDLE:
+		animatedRenderer->SetAnimation(0, 4);
+		break;
+
+	case PlayerState::MOVE:
+		animatedRenderer->SetAnimation(2, 8);
+		break;
+
+	case PlayerState::ROLL:
+		animatedRenderer->SetAnimation(3, 8);
+		break;
+
+	case PlayerState::HIT:
+		animatedRenderer->SetAnimation(4, 4);
+		break;
+	case PlayerState::DEATH:
+		animatedRenderer->SetAnimation(5, 4);
+		break;
+	}
+}
+
 void Player::Move() {
 	Vector2 velocity = physics->GetVelocity();
 
@@ -26,11 +62,13 @@ void Player::Move() {
 
 	if (Input.GetEvent(sf::Keyboard::Key::A, KeyState::DOWN) ||
 		Input.GetEvent(sf::Keyboard::Key::A, KeyState::HOLD)) {
+		lookingRight = false;
 		direction -= 1.0f;
 	}
 
 	if (Input.GetEvent(sf::Keyboard::Key::D, KeyState::DOWN) ||
 		Input.GetEvent(sf::Keyboard::Key::D, KeyState::HOLD)) {
+		lookingRight = true;
 		direction += 1.0f;
 	}
 
@@ -42,13 +80,38 @@ void Player::Move() {
 	}
 
 	physics->SetVelocity(velocity);
+
+	if (lookingRight) {
+		transform->scale.x = std::abs(transform->scale.x);
+	}
+	else {
+		transform->scale.x = -std::abs(transform->scale.x);
+	}
+
+	if (direction != 0.0f) {
+		ChangeAnimation(PlayerState::MOVE);
+	}
+	else {
+		ChangeAnimation(PlayerState::IDLE);
+	}
 }
 
 void Player::ResolveSolidCollision(Object* other) {
+	// HECHO CON IA PARA QUE NO ATRAVIESE EL SUELO NI LOS MUROS
 	Transform* otherTransform = other->GetTransform();
 
-	Vector2 playerHalfSize = (transform->size * transform->scale) / 2.0f;
-	Vector2 otherHalfSize = (otherTransform->size * otherTransform->scale) / 2.0f;
+	Vector2 playerScale = Vector2(
+		std::abs(transform->scale.x),
+		std::abs(transform->scale.y)
+	);
+
+	Vector2 otherScale = Vector2(
+		std::abs(otherTransform->scale.x),
+		std::abs(otherTransform->scale.y)
+	);
+
+	Vector2 playerHalfSize = (transform->size * playerScale) / 2.0f;
+	Vector2 otherHalfSize = (otherTransform->size * otherScale) / 2.0f;
 
 	float deltaX = transform->position.x - otherTransform->position.x;
 	float deltaY = transform->position.y - otherTransform->position.y;

@@ -12,7 +12,10 @@ private:
     float currentFrameTime;
     short rows;
     short columns;
-    Vector2 currentFrame{ 1.0f, 1.0f };
+    Vector2 currentFrame{ 0.0f, 0.0f };
+
+    short currentAnimationRow = 0;
+    short currentAnimationFrames = 0;
 public:
     AnimatedImageRenderer(short frameWidth, short frameHeight,
         short fps, bool looping, float frameTime,
@@ -22,7 +25,6 @@ public:
         this->color = color;
         currentFrameTime = 0.0f;
     }
-
+    void SetAnimation(short row, short totalFrames);
     virtual void Update(float dt) override;
-    virtual void Render() override;
 };

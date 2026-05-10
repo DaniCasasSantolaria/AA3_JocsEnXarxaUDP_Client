@@ -31,7 +31,7 @@ void Gameplay::OnEnter() {
     TileMap tileMap;
     tileMap.LoadFromFile("resources/Maps/1/Map1.txt");
 
-    Player* player = new Player("resources/Tilesets/knight.png", Vector2(0.0f, 0.0f), Vector2(32.0f, 32.0f), 1, 4, 1.0f, true, 1.0f, 3);
+    Player* player = new Player("resources/Tilesets/knight.png", Vector2(0.0f, 0.0f), Vector2(32.0f, 32.0f), 0, 4, 0.1f, true, 1.0f, 3);
 	player->GetTransform()->scale = Vector2(3.0f, 3.0f);
     player->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f, RM->WINDOW_HEIGHT / 2.0f);
     SPAWN.SpawnObject(player);

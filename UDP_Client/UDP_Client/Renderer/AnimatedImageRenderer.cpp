@@ -1,84 +1,42 @@
 #include "AnimatedImageRenderer.h"
 
-void AnimatedImageRenderer::Update(float dt) {
-	ImageRenderer::Update(dt);
-	if (currentFrameTime >= frameTime) {
-		currentFrameTime = 0;
+void AnimatedImageRenderer::SetAnimation(short row, short totalFrames) {
+	if (currentAnimationRow == row && currentAnimationFrames == totalFrames) {
+        return;
+    }
 
-		if (currentFrame.x < columns && currentFrame.y >= rows) {
-			sourceRect.position.y += frameHeight;
-			sourceRect.position.x = 0;
-			currentFrame.x++;
-			currentFrame.y = 1;
-		}
-		else if (currentFrame.y < rows) {
-			sourceRect.position.x += frameWidth;
-			currentFrame.y++;
-		}
-		else if (looping && currentFrame.y == rows && currentFrame.x == columns) {
-			sourceRect.position.x = 0;
-			sourceRect.position.y = 0;
-			currentFrame.y = 1;
-			currentFrame.x = 1;
-		}
-	}
-	else
-		currentFrameTime += dt;
+    currentAnimationRow = row;
+    currentAnimationFrames = totalFrames;
+
+    currentFrame.x = 0;
+    currentFrame.y = row;
+
+    currentFrameTime = 0.0f;
+
+    sourceRect.position.x = 0;
+    sourceRect.position.y = row * frameHeight;
 }
 
-void AnimatedImageRenderer::Render() {
-	//SDL_RenderCopy(RM->GetRenderer(), RM->GetTexture(targetPath), &sourceRect, &destRect);
+void AnimatedImageRenderer::Update(float dt) {
+    ImageRenderer::Update(dt);
 
-	if (!RM || !transform) return;
+    currentFrameTime += dt;
 
-	sf::RenderWindow* window = RM->GetWindow();
-	if (!window) return;
+    if (currentFrameTime >= frameTime) {
+        currentFrameTime = 0.0f;
 
-	sf::Texture* tex = RM->GetTexture(targetPath);
-	if (!tex) return;
+        currentFrame.x++;
 
-	const sf::Vector2u texSize = tex->getSize();
-	if (texSize.x == 0 || texSize.y == 0) return; // textura no cargada realmente
+        if (currentFrame.x >= currentAnimationFrames) {
+            if (looping) {
+                currentFrame.x = 0;
+            }
+            else {
+                currentFrame.x = currentAnimationFrames - 1;
+            }
+        }
 
-	sf::Sprite sprite(*tex);
-
-	// Recorte opcional
-	if (sourceRect.size.x > 0.f && sourceRect.size.y > 0.f) {
-		sf::IntRect texRect(
-			{
-				static_cast<int>(sourceRect.position.x),
-				static_cast<int>(sourceRect.position.y)
-			},
-			{
-				static_cast<int>(sourceRect.size.x),
-				static_cast<int>(sourceRect.size.y)
-			}
-		);
-
-		sprite.setTextureRect(texRect);
-	}
-
-	// Usar el tamaño real del sprite tras aplicar textureRect
-	const auto bounds = sprite.getLocalBounds();
-	if (bounds.size.x <= 0.f || bounds.size.y <= 0.f) return;
-
-	sprite.setOrigin({
-		bounds.size.x * 0.5f,
-		bounds.size.y * 0.5f
-		});
-
-	// Como Update ya calcula el rect centrado, aquí lo más limpio es usar el centro real
-	sprite.setPosition({
-		transform->position.x,
-		transform->position.y
-		});
-
-	sprite.setScale({
-		destRect.size.x / bounds.size.x,
-		destRect.size.y / bounds.size.y
-		});
-
-	sprite.setRotation(sf::degrees(transform->rotation));
-
-	window->draw(sprite);
+        sourceRect.position.x = currentFrame.x * frameWidth;
+        sourceRect.position.y = currentAnimationRow * frameHeight;
+    }
 }

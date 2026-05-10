@@ -1,5 +1,6 @@
 #include "Rigidbody.h"
 #include "Managers/TimeManager.h"
+#include <cmath>
 
 bool Rigidbody::CheckCollision(const Rigidbody* rb) {
 	for (AABB* myCol : colliders) {
@@ -38,9 +39,19 @@ void Rigidbody::Update(float dt) {
 	angularAcceleration = 0.0f;
 
 	//5 -> Update the colliders positioning
-	Vector2 offset = (Vector2(-transform->size.x, -transform->size.y) / 2.0f) * transform->scale;
+	Vector2 absScale = Vector2(
+		std::abs(transform->scale.x),
+		std::abs(transform->scale.y)
+	);
+
+	Vector2 colliderSize = transform->size * absScale;
+	Vector2 offset = Vector2(
+		-colliderSize.x / 2.0f,
+		-colliderSize.y / 2.0f
+	);
+
 	for (AABB* col : colliders) {
 		col->SetTopLeft(transform->position + offset);
-		col->SetSize(transform->size * transform->scale);
+		col->SetSize(colliderSize);
 	}
 }
