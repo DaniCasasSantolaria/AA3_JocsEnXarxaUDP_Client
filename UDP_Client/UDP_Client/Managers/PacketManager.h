@@ -10,13 +10,12 @@
 #define PM PacketManager::Instance()
 
 // Enum de tipos de paquetes que se pueden enviar/recibir
-enum packetType { HANDSHAKE, LOGIN, REGISTER, RANKING, CREATE_LOBBY, JOIN_LOBBY, OPEN_LISTENER, CLIENT_PORT, PEER_LIST, TURN_ACTION, PLAYER_INFO, WIN_NOTIFICATION, GAME_RESULT };
+enum packetType { HANDSHAKE, LOGIN, REGISTER, RANKING, MATCHMAKE, OPEN_LISTENER, CLIENT_PORT, PEER_LIST, TURN_ACTION, PLAYER_INFO, WIN_NOTIFICATION, GAME_RESULT };
 
 // Enum de resultados posibles en autenticación
 enum authResult { LOGIN_OK, USER_NOT_FOUND, WRONG_PASSWORD, REGISTER_OK, USER_ALREADY_EXISTS };
 
-// Enum de resultados posibles en operaciones de sala
-enum lobbyResult { LOBBY_CREATED_OK, LOBBY_ALREADY_EXISTS, LOBBY_CREATE_ERROR, LOBBY_JOINED_OK, LOBBY_NOT_FOUND, LOBBY_FULL };
+enum matchMode { NON_COMPETITIVE, COMPETITIVE };
 
 // Información básica del jugador
 struct PlayerInfo {
@@ -29,19 +28,18 @@ struct PlayerInfo {
 
 sf::Packet& operator <<(sf::Packet& packet, packetType type);
 sf::Packet& operator <<(sf::Packet& packet, authResult result);
-sf::Packet& operator <<(sf::Packet& packet, lobbyResult result);
+sf::Packet& operator <<(sf::Packet& packet, matchMode mode);
 
 sf::Packet& operator >>(sf::Packet& packet, packetType& type);
 sf::Packet& operator >>(sf::Packet& packet, authResult& result);
-sf::Packet& operator >>(sf::Packet& packet, lobbyResult& result);
-
+sf::Packet& operator >>(sf::Packet& packet, matchMode& mode);
 // Gestor de paquetes de red
 // Responsable de manejar toda la comunicación TCP/IP del cliente
 class PacketManager {
 private:
     // Constantes de configuración de red
     unsigned const short LISTENER_PORT = 55007; // Port
-    const sf::IpAddress SERVER_IP = sf::IpAddress(192, 168, 1, 130); // IP
+    const sf::IpAddress SERVER_IP = sf::IpAddress(192, 168, 1, 10); // IP
 
     // Sockets de comunicación
     sf::TcpSocket socket;
@@ -99,12 +97,13 @@ public:
     void HandShake(sf::Packet& data);
     void Login(sf::Packet& data);
     void Register(sf::Packet& data);
+	void Matchmake(sf::Packet& data);
 
     void SendLoginRequest(const std::string& username, const std::string& password);
     void SendRegisterRequest(const std::string& username, const std::string& password);
 
-    void CreateLobby(sf::Packet& data);
-    void JoinLobby(sf::Packet& data);
+    void SendMatchmakeRequest(matchMode mode);
+
     void OpenListenerHandler(sf::Packet& data);
     void PeerListHandler(sf::Packet& data);
 

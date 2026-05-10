@@ -74,7 +74,7 @@ void Game::Init() {
 	//assert(SM.AddScene("Ranking Screen", new RankingScreen()));*/
 
 	//INIT FIRST SCENE
-	SM.InitFirstScene("Gameplay");
+	SM.InitFirstScene("Login");
 }
 
 void Game::Update() {
