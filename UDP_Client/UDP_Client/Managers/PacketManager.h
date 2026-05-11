@@ -10,7 +10,7 @@
 #define PM PacketManager::Instance()
 
 // Enum de tipos de paquetes que se pueden enviar/recibir
-enum packetType { HANDSHAKE, LOGIN, REGISTER, RANKING, MATCHMAKE, OPEN_LISTENER, CLIENT_PORT, PEER_LIST, TURN_ACTION, PLAYER_INFO, WIN_NOTIFICATION, GAME_RESULT };
+enum packetType { HANDSHAKE, LOGIN, REGISTER, RANKING, MATCHMAKE, WIN_NOTIFICATION, GAME_RESULT, MAP_REQUEST, MAP_DATA };
 
 // Enum de resultados posibles en autenticación
 enum authResult { LOGIN_OK, USER_NOT_FOUND, WRONG_PASSWORD, REGISTER_OK, USER_ALREADY_EXISTS };
@@ -39,7 +39,7 @@ class PacketManager {
 private:
     // Constantes de configuración de red
     unsigned const short LISTENER_PORT = 55007; // Port
-    const sf::IpAddress SERVER_IP = sf::IpAddress(192, 168, 1, 10); // IP
+    const sf::IpAddress SERVER_IP = sf::IpAddress(192, 168, 1, 131); // IP
 
     // Sockets de comunicación
     sf::TcpSocket socket;
@@ -98,28 +98,25 @@ public:
     void Login(sf::Packet& data);
     void Register(sf::Packet& data);
 	void Matchmake(sf::Packet& data);
+	void MapData(sf::Packet& data);
 
     void SendLoginRequest(const std::string& username, const std::string& password);
     void SendRegisterRequest(const std::string& username, const std::string& password);
 
     void SendMatchmakeRequest(matchMode mode);
 
-    void OpenListenerHandler(sf::Packet& data);
+	void SendMapRequest();
+
     void PeerListHandler(sf::Packet& data);
 
     void GetRanking(sf::Packet& data);
     void RankingRequest();
 
-    void CreateActionRequest(const std::string& idLobby);
-    void JoinActionRequest(const std::string& idLobby);
-
     void SendToPeers(sf::Packet& packet);
+
     inline bool HasPendingAction() const { return !pendingActions.empty(); }
     std::pair<short, sf::Packet> PopPendingAction();
 
-    void SendPlayerInfoToAll();
-    void SendGreetingToAll();
-    inline bool HasPendingPlayerInfo() const { return !pendingPlayerInfo.empty(); }
     std::pair<short, PlayerInfo> PopPendingPlayerInfo();
 
     inline short GetMyIndex() const { return myIndex; }
@@ -142,7 +139,6 @@ public:
 
     void RecordWinner(short playerID);
 
-    void SendTurnAction(short row, short col, short playerID);
     inline std::map<short, sf::TcpSocket*> GetPeerSockets() const { return peerSockets; }
 
     void DisconnectPeers();

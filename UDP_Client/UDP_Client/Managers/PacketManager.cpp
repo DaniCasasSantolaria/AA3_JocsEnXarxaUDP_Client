@@ -2,6 +2,7 @@
 #include "SceneManager.h"
 
 #include <iostream>
+#include "../Maps/TileMap.h"
 
 sf::Packet& operator <<(sf::Packet& packet, packetType type) {
 	return packet << static_cast<short>(type);
@@ -81,103 +82,17 @@ void PacketManager::Update() {
 				break;
 			case RANKING:
 				GetRanking(packet);
+				break;
 			case MATCHMAKE:
 				Matchmake(packet);
 				break;
-			case OPEN_LISTENER:
-				OpenListenerHandler(packet);
-				break;
-			case PEER_LIST:
-				PeerListHandler(packet);
+			case MAP_DATA:
+				MapData(packet);
 				break;
 			default:
 				break;
 			}
 			packet.clear();
-		}
-	}
-
-	// Aceptar conexiones P2P
-	if (!p2pReady) {
-		if (myListener.getLocalPort() != 0)
-		{
-			sf::TcpSocket* incoming = new sf::TcpSocket();
-			if (myListener.accept(*incoming) == sf::Socket::Status::Done) {
-				incoming->setBlocking(false);
-				pendingAccepts.push_back(incoming);
-			}
-			else {
-				delete incoming;
-			}
-		}
-	}
-
-	// Identificar conexiones P2P entrantes
-	for (std::vector<sf::TcpSocket*>::iterator it = pendingAccepts.begin(); it != pendingAccepts.end(); ) {
-		sf::Packet hello;
-		if ((*it)->receive(hello) == sf::Socket::Status::Done) {
-			short peerIdx;
-			hello >> peerIdx;
-			peerSockets[peerIdx] = *it;
-			std::cout << "Peer " << peerIdx << " identified (incoming connection)" << std::endl;
-			it = pendingAccepts.erase(it);
-		}
-		else {
-			++it;
-		}
-	}
-
-	// Verificar si P2P está listo
-	if (!p2pReady && totalPlayers > 0
-		&& peerSockets.size() == totalPlayers - 1
-		&& pendingAccepts.empty())
-	{
-		p2pReady = true;
-		DisconnectFromServer();
-		std::cout << "P2P mesh ready. Own index: " << myIndex << std::endl;
-		SM.SetNextScene("Gameplay");
-	}
-
-	// Recibir paquetes de P2P
-	if (p2pReady) {
-		std::vector<short> disconnectedPeers;
-
-		for (std::pair<const short, sf::TcpSocket*>& entry : peerSockets) {
-			sf::Packet p;
-			sf::Socket::Status status = entry.second->receive(p);
-			if (status == sf::Socket::Status::Done) {
-				packetType type;
-				p >> type;
-				if (type == TURN_ACTION) {
-					pendingActions.push({ entry.first, p });
-				}
-				else if (type == PLAYER_INFO) {
-					PlayerInfo info;
-					p >> info.username >> info.score;
-					allUsernames[entry.first] = info.username;
-					pendingPlayerInfo.push({ entry.first, info });
-				}
-				else if (type == WIN_NOTIFICATION) {
-					short idPlayer;
-					p >> idPlayer;
-					std::cout << "Win notification received from player " << idPlayer << std::endl;
-				}
-				else {
-					std::cout << "Received unknown packet type from peer " << entry.first << std::endl;
-				}
-			}
-			else if (status == sf::Socket::Status::Disconnected) {
-				std::cout << "Peer " << entry.first << " disconnected" << std::endl;
-				disconnectedPeers.push_back(entry.first);
-				disconnectedPlayers.push_back(entry.first);
-				pendingDisconnects.push(entry.first);
-				delete entry.second;
-				break;
-			}
-		}
-
-		for (short i : disconnectedPeers) {
-			peerSockets.erase(i);
 		}
 	}
 }
@@ -263,6 +178,24 @@ void PacketManager::Matchmake(sf::Packet& data) {
 	}
 }
 
+void PacketManager::MapData(sf::Packet& data) {
+	unsigned short mapCount = 0;
+	data >> mapCount;
+
+	for (unsigned short i = 0; i < mapCount; i++) {
+		std::string relativePath;
+		std::string mapContent;
+
+		data >> relativePath >> mapContent;
+
+		std::string localPath = "resources/Maps/" + relativePath;
+		std::cout << localPath << std::endl;
+
+		TileMap tileMap;
+		tileMap.UpdateLocalMap(localPath, mapContent);
+	}
+}
+
 // Envía solicitud de login al servidor con usuario y contraseña
 void PacketManager::SendLoginRequest(const std::string& username, const std::string& password) {
 	sf::Packet packet;
@@ -307,6 +240,17 @@ void PacketManager::SendMatchmakeRequest(matchMode mode)
 	}
 }
 
+void PacketManager::SendMapRequest() {
+	sf::Packet packet;
+	packetType type = MAP_REQUEST;
+
+	packet << type;
+
+	if (socket.send(packet) != sf::Socket::Status::Done) {
+		std::cerr << "Failed to request map" << std::endl;
+	}
+}
+
 // Procesa datos de ranking recibidos del servidor, extrae nombre, puntuación y posición de cada jugador y lo alamcena
 void PacketManager::GetRanking(sf::Packet& data)
 {
@@ -331,27 +275,6 @@ void PacketManager::RankingRequest() {
 	}
 	else {
 		std::cout << "Ranking request data sent to server: " << std::endl;
-	}
-}
-
-// Procesa instrucción del servidor para abrir listener P2P, extrae índice de cliente y ID de sala
-void PacketManager::OpenListenerHandler(sf::Packet& data) {
-	short index;
-	std::string lobbyId;
-	data >> index >> lobbyId;
-
-	myIndex = index;
-	currentLobbyId = lobbyId;
-
-	myListener.setBlocking(false);
-	myListener.listen(0);
-
-	unsigned short port = myListener.getLocalPort();
-
-	sf::Packet response;
-	response << CLIENT_PORT << lobbyId << port;
-	if (socket.send(response) == sf::Socket::Status::Done) {
-		std::cout << "Listener opened on port " << port << ", index=" << myIndex << std::endl;
 	}
 }
 
@@ -420,40 +343,11 @@ std::pair<short, sf::Packet> PacketManager::PopPendingAction() {
 	return front;
 }
 
-// Envía información del jugador actual (usuario y puntuación) a todos los jugadores
-void PacketManager::SendPlayerInfoToAll() {
-	sf::Packet packet;
-	packetType type = PLAYER_INFO;
-	std::string username = playerInfo.username;
-	int score = playerInfo.score;
-	packet << type << username << score;
-	SendToPeers(packet);
-	std::cout << "Player info sent to peers: " << username << " with score: " << score << std::endl;
-}
-
-// Envía saludo inicial a todos los jugadores
-void PacketManager::SendGreetingToAll() {
-	sf::Packet packet;
-	packetType type = PLAYER_INFO;
-	std::string greeting = "Hola: " + myUsername;
-	packet << type << greeting;
-	SendToPeers(packet);
-	std::cout << "Greeting sent to peers: " << greeting << std::endl;
-}
-
 // Extrae y retorna la siguiente información de jugador pendiente de la cola, contiene el índice del jugador y su información (usuario y puntuación)
 std::pair<short, PlayerInfo> PacketManager::PopPendingPlayerInfo() {
 	std::pair<short, PlayerInfo> front = pendingPlayerInfo.front();
 	pendingPlayerInfo.pop();
 	return front;
-}
-
-// Envía acción de turno (movimiento) a todos los jugadores, incluye fila, columna e ID del jugador que realiza la acción
-void PacketManager::SendTurnAction(short row, short col, short playerID) {
-	sf::Packet packet;
-	packetType type = TURN_ACTION;
-	packet << type << row << col << playerID;
-	SendToPeers(packet);
 }
 
 // Desconecta todos los jugadores P2P activos, libera memoria de sockets y limpia estructuras de datos P2P
