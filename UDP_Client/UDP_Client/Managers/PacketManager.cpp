@@ -16,6 +16,10 @@ sf::Packet& operator <<(sf::Packet& packet, matchMode mode) {
 	return packet << static_cast<short>(mode);
 }
 
+sf::Packet& operator <<(sf::Packet& packet, matchmakeStatus status) {
+	return packet << static_cast<short>(status);
+}
+
 sf::Packet& operator >>(sf::Packet& packet, packetType& type) {
 	short  temp;
 	packet >> temp;
@@ -34,6 +38,13 @@ sf::Packet& operator >>(sf::Packet& packet, matchMode& mode) {
 	short  temp;
 	packet >> temp;
 	mode = static_cast<matchMode>(temp);
+	return packet;
+}
+
+sf::Packet& operator >>(sf::Packet& packet, matchmakeStatus& status) {
+	short  temp;
+	packet >> temp;
+	status = static_cast<matchmakeStatus>(temp);
 	return packet;
 }
 
@@ -163,14 +174,26 @@ void PacketManager::Register(sf::Packet& data) {
 
 void PacketManager::Matchmake(sf::Packet& data) {
 	matchMode mode;
+	matchmakeStatus status;
 	data >> mode;
+	data >> status;
 	switch (mode)
 	{
-	case NON_COMPETITIVE:
-		std::cout << "Entered non-competitive matchmaking queue" << std::endl;
-		break;
 	case COMPETITIVE:
-		std::cout << "Entered competitive matchmaking queue" << std::endl;
+		if (status == QUEUE_WAITING) {
+			std::cout << "Added to competitive matchmaking queue. Waiting for match..." << std::endl;
+		}
+		else {
+			std::cout << "Competitive match found. Opening UDP socket..." << std::endl;
+		}
+		break;
+	case NON_COMPETITIVE:
+		if(status == QUEUE_WAITING) {
+			std::cout << "Added to non-competitive matchmaking queue. Waiting for match..." << std::endl;
+		}
+		else {
+			std::cout << "Non-competitive match found. Opening UDP socket..." << std::endl;
+		}
 		break;
 	default:
 		std::cout << "Unknown matchmaking mode" << std::endl;
@@ -432,3 +455,7 @@ void PacketManager::Release() {
 	}
 	pendingAccepts.clear();
 }
+
+
+
+

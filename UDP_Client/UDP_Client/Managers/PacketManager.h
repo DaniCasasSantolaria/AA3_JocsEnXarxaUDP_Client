@@ -12,10 +12,14 @@
 // Enum de tipos de paquetes que se pueden enviar/recibir
 enum packetType { HANDSHAKE, LOGIN, REGISTER, RANKING, MATCHMAKE, WIN_NOTIFICATION, GAME_RESULT, MAP_REQUEST, MAP_DATA };
 
+enum udpPacketType { UDP_JOIN, UDP_JOIN_ACCEPTED, UDP_READY, UDP_INPUT, UDP_SNAPSHOT};
+
 // Enum de resultados posibles en autenticación
 enum authResult { LOGIN_OK, USER_NOT_FOUND, WRONG_PASSWORD, REGISTER_OK, USER_ALREADY_EXISTS };
 
 enum matchMode { NON_COMPETITIVE, COMPETITIVE };
+
+enum matchmakeStatus { QUEUE_WAITING, MATCH_FOUND };
 
 // Información básica del jugador
 struct PlayerInfo {
@@ -39,13 +43,21 @@ class PacketManager {
 private:
     // Constantes de configuración de red
     unsigned const short LISTENER_PORT = 55007; // Port
-    const sf::IpAddress SERVER_IP = sf::IpAddress(192, 168, 1, 131); // IP
+    const sf::IpAddress SERVER_IP = sf::IpAddress(10, 8, 0, 3); // IP
 
-    // Sockets de comunicación
+    // TCP Sockets de comunicación
     sf::TcpSocket socket;
     sf::TcpListener myListener;
     std::map<short, sf::TcpSocket*> peerSockets;
     std::vector<sf::TcpSocket*> pendingAccepts;
+
+    //UDP
+    unsigned const short UDP_SERVER_PORT = 55008;
+    const sf::IpAddress UDP_SERVER_IP = sf::IpAddress(10, 8, 0, 2); // IP
+    sf::UdpSocket udpSocket;
+    bool udpConnected = false;
+
+    
 
     // Estado de conexión
     short myIndex = -1;
