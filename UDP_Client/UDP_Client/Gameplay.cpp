@@ -6,7 +6,7 @@
 #include "Managers/InputManager.h"
 #include "Managers/PacketManager.h"
 #include "Maps/TileMap.h"
-#include "player/Player.h"
+#include "player/LocalPlayer.h"
 
 #define GRID_WIDTH 1000.0f
 #define GRID_HEIGHT 800.0f
@@ -29,9 +29,9 @@ void Gameplay::OnEnter() {
     float height = GRID_HEIGHT / MAX_ROWS;
 
     TileMap tileMap;
-    tileMap.LoadFromFile("resources/Maps/1/Map1.txt");
+    tileMap.LoadFromFile("resources/Maps/Map.txt");
 
-    Player* player = new Player("resources/Tilesets/knight.png", Vector2(0.0f, 0.0f), Vector2(32.0f, 32.0f), 0, 4, 0.1f, true, 1.0f, 3);
+    Player* player = new LocalPlayer("resources/Tilesets/knight.png", Vector2(0.0f, 0.0f), Vector2(32.0f, 32.0f), 0, 4, 0.1f, true, 1.0f, 3);
 	player->GetTransform()->scale = Vector2(3.0f, 3.0f);
     player->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f, RM->WINDOW_HEIGHT / 2.0f);
     SPAWN.SpawnObject(player);

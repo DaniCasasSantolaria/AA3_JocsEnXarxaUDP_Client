@@ -141,6 +141,8 @@
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Gameplay.cpp" />
     <ClCompile Include="Gameplay\GridBox.cpp" />
+    <ClCompile Include="player\OnlinePlayer.cpp" />
+    <ClCompile Include="player\LocalPlayer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainMenu.cpp" />
     <ClCompile Include="Managers\InputManager.cpp" />
@@ -174,6 +176,8 @@
     <ClInclude Include="Gameplay\GridBox.h" />
     <ClInclude Include="GravityObject.h" />
     <ClInclude Include="ImageObject.h" />
+    <ClInclude Include="player\OnlinePlayer.h" />
+    <ClInclude Include="player\LocalPlayer.h" />
     <ClInclude Include="MainMenu.h" />
     <ClInclude Include="Managers\AudioManager.h" />
     <ClInclude Include="Managers\InputManager.h" />

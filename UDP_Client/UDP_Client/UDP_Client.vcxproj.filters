@@ -93,6 +93,12 @@
     <ClCompile Include="Maps\TileMap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="player\LocalPlayer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="player\OnlinePlayer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AABB.h">
@@ -213,6 +219,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Maps\TileMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="player\LocalPlayer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="player\OnlinePlayer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -10,9 +10,7 @@
 #define PM PacketManager::Instance()
 
 // Enum de tipos de paquetes que se pueden enviar/recibir
-enum packetType { HANDSHAKE, LOGIN, REGISTER, RANKING, MATCHMAKE, WIN_NOTIFICATION, GAME_RESULT, MAP_REQUEST };
-
-enum udpPacketType { UDP_JOIN, UDP_JOIN_ACCEPTED, UDP_READY, UDP_INPUT, UDP_SNAPSHOT};
+enum packetType { HANDSHAKE, LOGIN, REGISTER, RANKING, MATCHMAKE, WIN_NOTIFICATION, GAME_RESULT, MAP_REQUEST, MOVEMENT };
 
 // Enum de resultados posibles en autenticación
 enum authResult { LOGIN_OK, USER_NOT_FOUND, WRONG_PASSWORD, REGISTER_OK, USER_ALREADY_EXISTS };
@@ -22,6 +20,8 @@ enum matchMode { NON_COMPETITIVE, COMPETITIVE };
 enum matchmakeStatus { QUEUE_WAITING, MATCH_FOUND };
 
 enum mapRequestType { MAP_VERSION_CHECK, MAP_UP_TO_DATE, MAP_UPDATE };
+
+enum movementPos { SEND_RAW_MOVEMENT, RECEIVE_VALIDATED_MOVEMENT };
 
 // Información básica del jugador
 struct PlayerInfo {
@@ -35,17 +35,22 @@ struct PlayerInfo {
 sf::Packet& operator <<(sf::Packet& packet, packetType type);
 sf::Packet& operator <<(sf::Packet& packet, authResult result);
 sf::Packet& operator <<(sf::Packet& packet, matchMode mode);
+sf::Packet& operator <<(sf::Packet& packet, matchmakeStatus status);
+sf::Packet& operator <<(sf::Packet& packet, movementPos status);
 
 sf::Packet& operator >>(sf::Packet& packet, packetType& type);
 sf::Packet& operator >>(sf::Packet& packet, authResult& result);
 sf::Packet& operator >>(sf::Packet& packet, matchMode& mode);
+sf::Packet& operator >>(sf::Packet& packet, matchmakeStatus& status);
+sf::Packet& operator >>(sf::Packet& packet, movementPos& status);
+
 // Gestor de paquetes de red
 // Responsable de manejar toda la comunicación TCP/IP del cliente
 class PacketManager {
 private:
     // Constantes de configuración de red
     unsigned const short LISTENER_PORT = 55007; // Port
-    const sf::IpAddress SERVER_IP = sf::IpAddress(10, 8, 0, 2); // IP
+    const sf::IpAddress SERVER_IP = sf::IpAddress(10, 8, 0, 3); // IP
 
     // TCP Sockets de comunicación
     sf::TcpSocket socket;
@@ -114,6 +119,7 @@ public:
     void Register(sf::Packet& data);
 	void Matchmake(sf::Packet& data);
     void HandleMapRequest(sf::Packet& packet);
+	void HandleMovement(sf::Packet& packet);
 
 
 	//LOGIN Y REGISTER
@@ -137,39 +143,6 @@ public:
     void RankingRequest();
 
 
-    //P2P
-    void PeerListHandler(sf::Packet& data);
-    void SendToPeers(sf::Packet& packet);
-
-    inline bool HasPendingAction() const { return !pendingActions.empty(); }
-    std::pair<short, sf::Packet> PopPendingAction();
-
-    std::pair<short, PlayerInfo> PopPendingPlayerInfo();
-
-    inline short GetMyIndex() const { return myIndex; }
-    inline unsigned short GetTotalPlayers() const { return totalPlayers; }
-    inline bool IsP2PReady() const { return p2pReady; }
-    inline bool IsPeerConnected(short playerID) const { return peerSockets.find(playerID) != peerSockets.end(); }
-    inline bool HasFinished(short playerID) const {
-        for (unsigned short i = 0; i < finishedCount; i++)
-            if (finalRanking[i] == playerID) return true;
-        return false;
-    }
-    inline bool IsDisconnected(short playerID) const {
-        for (short id : disconnectedPlayers)
-            if (id == playerID) return true;
-        return false;
-    }
-    inline unsigned short GetFinishedCount() const { return finishedCount; }
-    inline bool HasPendingDisconnect() const { return !pendingDisconnects.empty(); }
-    short  PopPendingDisconnect();
-
-    void RecordWinner(short playerID);
-
-    inline std::map<short, sf::TcpSocket*> GetPeerSockets() const { return peerSockets; }
-
-    void DisconnectPeers();
-
-    void SendWinNotificationToAll(short idPlayer);
-    void SendGameResult();
+    //MOVEMENT
+	void SendMovement(float x, float y);
 };
