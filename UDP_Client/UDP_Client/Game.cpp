@@ -17,7 +17,7 @@ void Game::Init() {
 	RM->Init();
 	PM->ConnectToServer();
 
-	PM->SendMapRequest();
+	PM->RequestMap();
 
 	//IMAGES
 	RM->LoadTexture("resources/Tres.png");

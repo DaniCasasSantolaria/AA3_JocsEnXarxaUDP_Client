@@ -10,7 +10,7 @@
 #define PM PacketManager::Instance()
 
 // Enum de tipos de paquetes que se pueden enviar/recibir
-enum packetType { HANDSHAKE, LOGIN, REGISTER, RANKING, MATCHMAKE, WIN_NOTIFICATION, GAME_RESULT, MAP_REQUEST, MAP_DATA };
+enum packetType { HANDSHAKE, LOGIN, REGISTER, RANKING, MATCHMAKE, WIN_NOTIFICATION, GAME_RESULT, MAP_REQUEST };
 
 enum udpPacketType { UDP_JOIN, UDP_JOIN_ACCEPTED, UDP_READY, UDP_INPUT, UDP_SNAPSHOT};
 
@@ -20,6 +20,8 @@ enum authResult { LOGIN_OK, USER_NOT_FOUND, WRONG_PASSWORD, REGISTER_OK, USER_AL
 enum matchMode { NON_COMPETITIVE, COMPETITIVE };
 
 enum matchmakeStatus { QUEUE_WAITING, MATCH_FOUND };
+
+enum mapRequestType { MAP_VERSION_CHECK, MAP_UP_TO_DATE, MAP_UPDATE };
 
 // Información básica del jugador
 struct PlayerInfo {
@@ -43,7 +45,7 @@ class PacketManager {
 private:
     // Constantes de configuración de red
     unsigned const short LISTENER_PORT = 55007; // Port
-    const sf::IpAddress SERVER_IP = sf::IpAddress(10, 8, 0, 3); // IP
+    const sf::IpAddress SERVER_IP = sf::IpAddress(10, 8, 0, 2); // IP
 
     // TCP Sockets de comunicación
     sf::TcpSocket socket;
@@ -57,7 +59,6 @@ private:
     sf::UdpSocket udpSocket;
     bool udpConnected = false;
 
-    
 
     // Estado de conexión
     short myIndex = -1;
@@ -106,24 +107,38 @@ public:
     void Update();
     void Release();
 
+
+    //RECIVIR PAQUETES
     void HandShake(sf::Packet& data);
     void Login(sf::Packet& data);
     void Register(sf::Packet& data);
 	void Matchmake(sf::Packet& data);
-	void MapData(sf::Packet& data);
+    void HandleMapRequest(sf::Packet& packet);
 
+
+	//LOGIN Y REGISTER
     void SendLoginRequest(const std::string& username, const std::string& password);
     void SendRegisterRequest(const std::string& username, const std::string& password);
 
+
+    //MATCHMAKE
     void SendMatchmakeRequest(matchMode mode);
 
-	void SendMapRequest();
 
-    void PeerListHandler(sf::Packet& data);
+    //MAP
+    void RequestMap();
+    unsigned short LoadLocalMapVersion();
+    void SaveLocalMap(const std::string& mapContent);
+    void SaveLocalMapVersion(unsigned short version);
 
+
+    //RANKING
     void GetRanking(sf::Packet& data);
     void RankingRequest();
 
+
+    //P2P
+    void PeerListHandler(sf::Packet& data);
     void SendToPeers(sf::Packet& packet);
 
     inline bool HasPendingAction() const { return !pendingActions.empty(); }

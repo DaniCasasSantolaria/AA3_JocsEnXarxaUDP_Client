@@ -2,6 +2,8 @@
 #include "SceneManager.h"
 
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include "../Maps/TileMap.h"
 
 sf::Packet& operator <<(sf::Packet& packet, packetType type) {
@@ -97,8 +99,8 @@ void PacketManager::Update() {
 			case MATCHMAKE:
 				Matchmake(packet);
 				break;
-			case MAP_DATA:
-				MapData(packet);
+			case MAP_REQUEST:
+				HandleMapRequest(packet);
 				break;
 			default:
 				break;
@@ -201,21 +203,29 @@ void PacketManager::Matchmake(sf::Packet& data) {
 	}
 }
 
-void PacketManager::MapData(sf::Packet& data) {
-	unsigned short mapCount = 0;
-	data >> mapCount;
+void PacketManager::HandleMapRequest(sf::Packet& packet) {
+	short requestTypeValue;
+	packet >> requestTypeValue;
 
-	for (unsigned short i = 0; i < mapCount; i++) {
-		std::string relativePath;
+	mapRequestType requestType = static_cast<mapRequestType>(requestTypeValue);
+
+	if (requestType == MAP_UP_TO_DATE) {
+		unsigned short serverVersion;
+		packet >> serverVersion;
+
+		std::cout << "Map already updated. Actual version: " << serverVersion << std::endl;
+		return;
+	}
+	else if (requestType == MAP_UPDATE) {
+		unsigned short serverVersion;
 		std::string mapContent;
 
-		data >> relativePath >> mapContent;
+		packet >> serverVersion >> mapContent;
 
-		std::string localPath = "resources/Maps/" + relativePath;
-		std::cout << localPath << std::endl;
+		SaveLocalMap(mapContent);
+		SaveLocalMapVersion(serverVersion);
 
-		TileMap tileMap;
-		tileMap.UpdateLocalMap(localPath, mapContent);
+		std::cout << "Map updated to the new version: " << serverVersion << std::endl;
 	}
 }
 
@@ -263,15 +273,49 @@ void PacketManager::SendMatchmakeRequest(matchMode mode)
 	}
 }
 
-void PacketManager::SendMapRequest() {
-	sf::Packet packet;
-	packetType type = MAP_REQUEST;
+void PacketManager::RequestMap() {
+	unsigned short localVersion = LoadLocalMapVersion();
 
-	packet << type;
+	sf::Packet packet;
+	packet << MAP_REQUEST << static_cast<short>(MAP_VERSION_CHECK) << localVersion;
 
 	if (socket.send(packet) != sf::Socket::Status::Done) {
 		std::cerr << "Failed to request map" << std::endl;
 	}
+}
+
+unsigned short PacketManager::LoadLocalMapVersion() {
+	std::ifstream file("resources/Maps/map_version.txt");
+
+	unsigned short version = 0;
+
+	if (file.is_open()) {
+		file >> version;
+	}
+
+	return version;
+}
+
+void PacketManager::SaveLocalMap(const std::string& mapContent) {
+	std::ofstream file("resources/Maps/Map.txt", std::ios::trunc);
+
+	if (!file.is_open()) {
+		std::cerr << "No se pudo guardar el mapa local" << std::endl;
+		return;
+	}
+
+	file << mapContent;
+}
+
+void PacketManager::SaveLocalMapVersion(unsigned short version) {
+	std::ofstream file("resources/Maps/map_version.txt", std::ios::trunc);
+
+	if (!file.is_open()) {
+		std::cerr << "No se pudo guardar la version local del mapa" << std::endl;
+		return;
+	}
+
+	file << version;
 }
 
 // Procesa datos de ranking recibidos del servidor, extrae nombre, puntuación y posición de cada jugador y lo alamcena

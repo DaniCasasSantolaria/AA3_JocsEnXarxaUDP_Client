@@ -2,7 +2,7 @@
 #include <iostream>
 #include <cstring>
 
-#define SERVER_PORT 55008
+/*#define SERVER_PORT 55008
 const sf::IpAddress SERVER_IP = sf::IpAddress(127, 0, 0, 1);
 
 void main() {
@@ -32,7 +32,7 @@ void main() {
 			//return;
 		}
 	}
-}
+}*/
 
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
