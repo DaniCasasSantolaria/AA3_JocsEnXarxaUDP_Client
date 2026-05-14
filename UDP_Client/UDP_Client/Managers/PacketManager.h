@@ -10,12 +10,18 @@
 #define PM PacketManager::Instance()
 
 // Enum de tipos de paquetes que se pueden enviar/recibir
-enum packetType { HANDSHAKE, LOGIN, REGISTER, RANKING, MATCHMAKE, OPEN_LISTENER, CLIENT_PORT, PEER_LIST, TURN_ACTION, PLAYER_INFO, WIN_NOTIFICATION, GAME_RESULT };
+enum packetType { HANDSHAKE, LOGIN, REGISTER, RANKING, MATCHMAKE, WIN_NOTIFICATION, GAME_RESULT, MAP_REQUEST };
+
+enum udpPacketType { UDP_JOIN, UDP_JOIN_ACCEPTED, UDP_READY, UDP_INPUT, UDP_SNAPSHOT};
 
 // Enum de resultados posibles en autenticación
 enum authResult { LOGIN_OK, USER_NOT_FOUND, WRONG_PASSWORD, REGISTER_OK, USER_ALREADY_EXISTS };
 
 enum matchMode { NON_COMPETITIVE, COMPETITIVE };
+
+enum matchmakeStatus { QUEUE_WAITING, MATCH_FOUND };
+
+enum mapRequestType { MAP_VERSION_CHECK, MAP_UP_TO_DATE, MAP_UPDATE };
 
 // Información básica del jugador
 struct PlayerInfo {
@@ -39,13 +45,20 @@ class PacketManager {
 private:
     // Constantes de configuración de red
     unsigned const short LISTENER_PORT = 55007; // Port
-    const sf::IpAddress SERVER_IP = sf::IpAddress(192, 168, 1, 10); // IP
+    const sf::IpAddress SERVER_IP = sf::IpAddress(10, 8, 0, 2); // IP
 
-    // Sockets de comunicación
+    // TCP Sockets de comunicación
     sf::TcpSocket socket;
     sf::TcpListener myListener;
     std::map<short, sf::TcpSocket*> peerSockets;
     std::vector<sf::TcpSocket*> pendingAccepts;
+
+    //UDP
+    unsigned const short UDP_SERVER_PORT = 55008;
+    const sf::IpAddress UDP_SERVER_IP = sf::IpAddress(10, 8, 0, 2); // IP
+    sf::UdpSocket udpSocket;
+    bool udpConnected = false;
+
 
     // Estado de conexión
     short myIndex = -1;
@@ -94,32 +107,43 @@ public:
     void Update();
     void Release();
 
+
+    //RECIVIR PAQUETES
     void HandShake(sf::Packet& data);
     void Login(sf::Packet& data);
     void Register(sf::Packet& data);
 	void Matchmake(sf::Packet& data);
+    void HandleMapRequest(sf::Packet& packet);
 
+
+	//LOGIN Y REGISTER
     void SendLoginRequest(const std::string& username, const std::string& password);
     void SendRegisterRequest(const std::string& username, const std::string& password);
 
+
+    //MATCHMAKE
     void SendMatchmakeRequest(matchMode mode);
 
-    void OpenListenerHandler(sf::Packet& data);
-    void PeerListHandler(sf::Packet& data);
 
+    //MAP
+    void RequestMap();
+    unsigned short LoadLocalMapVersion();
+    void SaveLocalMap(const std::string& mapContent);
+    void SaveLocalMapVersion(unsigned short version);
+
+
+    //RANKING
     void GetRanking(sf::Packet& data);
     void RankingRequest();
 
-    void CreateActionRequest(const std::string& idLobby);
-    void JoinActionRequest(const std::string& idLobby);
 
+    //P2P
+    void PeerListHandler(sf::Packet& data);
     void SendToPeers(sf::Packet& packet);
+
     inline bool HasPendingAction() const { return !pendingActions.empty(); }
     std::pair<short, sf::Packet> PopPendingAction();
 
-    void SendPlayerInfoToAll();
-    void SendGreetingToAll();
-    inline bool HasPendingPlayerInfo() const { return !pendingPlayerInfo.empty(); }
     std::pair<short, PlayerInfo> PopPendingPlayerInfo();
 
     inline short GetMyIndex() const { return myIndex; }
@@ -142,7 +166,6 @@ public:
 
     void RecordWinner(short playerID);
 
-    void SendTurnAction(short row, short col, short playerID);
     inline std::map<short, sf::TcpSocket*> GetPeerSockets() const { return peerSockets; }
 
     void DisconnectPeers();
