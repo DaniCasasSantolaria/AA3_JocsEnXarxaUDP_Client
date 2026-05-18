@@ -10,7 +10,8 @@
 #define PM PacketManager::Instance()
 
 // Enum de tipos de paquetes que se pueden enviar/recibir
-enum packetType { HANDSHAKE, LOGIN, REGISTER, RANKING, MATCHMAKE, WIN_NOTIFICATION, GAME_RESULT, MAP_REQUEST, MOVEMENT };
+enum packetType { HANDSHAKE, LOGIN, REGISTER, RANKING, MATCHMAKE, WIN_NOTIFICATION, GAME_RESULT, MAP_REQUEST };
+enum udpPacketType { MOVEMENT };
 
 // Enum de resultados posibles en autenticación
 enum authResult { LOGIN_OK, USER_NOT_FOUND, WRONG_PASSWORD, REGISTER_OK, USER_ALREADY_EXISTS };
@@ -21,7 +22,7 @@ enum matchmakeStatus { QUEUE_WAITING, MATCH_FOUND };
 
 enum mapRequestType { MAP_VERSION_CHECK, MAP_UP_TO_DATE, MAP_UPDATE };
 
-enum movementPos { SEND_RAW_MOVEMENT, RECEIVE_VALIDATED_MOVEMENT };
+enum movementPacketType { SEND_RAW_MOVEMENT, RECEIVE_VALIDATED_MOVEMENT };
 
 // Información básica del jugador
 struct PlayerInfo {
@@ -36,13 +37,13 @@ sf::Packet& operator <<(sf::Packet& packet, packetType type);
 sf::Packet& operator <<(sf::Packet& packet, authResult result);
 sf::Packet& operator <<(sf::Packet& packet, matchMode mode);
 sf::Packet& operator <<(sf::Packet& packet, matchmakeStatus status);
-sf::Packet& operator <<(sf::Packet& packet, movementPos status);
+sf::Packet& operator <<(sf::Packet& packet, movementPacketType status);
 
 sf::Packet& operator >>(sf::Packet& packet, packetType& type);
 sf::Packet& operator >>(sf::Packet& packet, authResult& result);
 sf::Packet& operator >>(sf::Packet& packet, matchMode& mode);
 sf::Packet& operator >>(sf::Packet& packet, matchmakeStatus& status);
-sf::Packet& operator >>(sf::Packet& packet, movementPos& status);
+sf::Packet& operator >>(sf::Packet& packet, movementPacketType& status);
 
 // Gestor de paquetes de red
 // Responsable de manejar toda la comunicación TCP/IP del cliente
@@ -50,7 +51,7 @@ class PacketManager {
 private:
     // Constantes de configuración de red
     unsigned const short LISTENER_PORT = 55007; // Port
-    const sf::IpAddress SERVER_IP = sf::IpAddress(10, 8, 0, 3); // IP
+    const sf::IpAddress SERVER_IP = sf::IpAddress(10, 8, 0, 2); // IP
 
     // TCP Sockets de comunicación
     sf::TcpSocket socket;
@@ -63,6 +64,8 @@ private:
     const sf::IpAddress UDP_SERVER_IP = sf::IpAddress(10, 8, 0, 2); // IP
     sf::UdpSocket udpSocket;
     bool udpConnected = false;
+    unsigned int urgentBitmask = 00000001;
+	unsigned int criticBitmask = 00000010;
 
 
     // Estado de conexión
@@ -75,7 +78,6 @@ private:
     // Colas de eventos pendientes de procesar
     std::queue<std::pair<short, sf::Packet>> pendingActions;
     std::queue<std::pair<short, PlayerInfo>> pendingPlayerInfo;
-    std::queue<short> pendingDisconnects;
 
     PacketManager() = default;
     PacketManager(PacketManager&) = delete;
@@ -119,7 +121,7 @@ public:
     void Register(sf::Packet& data);
 	void Matchmake(sf::Packet& data);
     void HandleMapRequest(sf::Packet& packet);
-	void HandleMovement(sf::Packet& packet);
+    void HandleMovement(const char* buffer, std::size_t receivedSize, std::size_t readPos);
 
 
 	//LOGIN Y REGISTER
@@ -144,5 +146,5 @@ public:
 
 
     //MOVEMENT
-	void SendMovement(float x, float y);
+	void SendMovement(float x, float y, unsigned int movementID);
 };

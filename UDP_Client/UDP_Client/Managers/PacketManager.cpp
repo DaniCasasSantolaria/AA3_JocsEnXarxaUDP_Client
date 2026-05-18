@@ -22,7 +22,7 @@ sf::Packet& operator <<(sf::Packet& packet, matchmakeStatus status) {
 	return packet << static_cast<short>(status);
 }
 
-sf::Packet& operator<<(sf::Packet& packet, movementPos status) {
+sf::Packet& operator<<(sf::Packet& packet, movementPacketType status) {
 	return packet << static_cast<short>(status);
 }
 
@@ -54,10 +54,10 @@ sf::Packet& operator >>(sf::Packet& packet, matchmakeStatus& status) {
 	return packet;
 }
 
-sf::Packet& operator>>(sf::Packet& packet, movementPos& status) {
+sf::Packet& operator>>(sf::Packet& packet, movementPacketType& status) {
 	short  temp;
 	packet >> temp;
-	status = static_cast<movementPos>(temp);
+	status = static_cast<movementPacketType>(temp);
 	return packet;
 }
 
@@ -119,6 +119,49 @@ void PacketManager::Update() {
 			packet.clear();
 		}
 	}
+
+	if(udpConnected) {
+		char buffer[1024];
+		std::size_t receivedSize;
+		std::optional <sf::IpAddress> senderIP;
+		unsigned short senderPort;
+		if (udpSocket.receive(buffer, sizeof(buffer), receivedSize, senderIP, senderPort) == sf::Socket::Status::Done) {
+			std::size_t readPos = 0;
+
+			if (readPos + sizeof(udpPacketType) > receivedSize) return;
+
+			udpPacketType packetType;
+			std::memcpy(&packetType, buffer + readPos, sizeof(packetType));
+			readPos += sizeof(packetType);
+
+			switch (packetType) {
+			case udpPacketType::MOVEMENT:
+				HandleMovement(buffer, receivedSize, readPos);
+				break;
+
+			default:
+				break;
+			}
+		}
+	}
+}
+
+
+// Libera todos los recursos del gestor de paquetes, desconecta del servidor y de todos los jugadores, libera memoria de todos los sockets
+void PacketManager::Release() {
+	if (serverConnected) {
+		DisconnectFromServer();
+	}
+	for (std::pair<const short, sf::TcpSocket*>& entry : peerSockets) {
+		entry.second->disconnect();
+		delete entry.second;
+	}
+	peerSockets.clear();
+	for (sf::TcpSocket* s : pendingAccepts) {
+		s->disconnect();
+		delete s;
+	}
+	pendingAccepts.clear();
 }
 
 // Paquete de handshake del servidor
@@ -190,6 +233,7 @@ void PacketManager::Matchmake(sf::Packet& data) {
 	matchmakeStatus status;
 	data >> mode;
 	data >> status;
+	bool matchStarted = false;
 	switch (mode)
 	{
 	case COMPETITIVE:
@@ -198,6 +242,7 @@ void PacketManager::Matchmake(sf::Packet& data) {
 		}
 		else {
 			std::cout << "Competitive match found. Opening UDP socket..." << std::endl;
+			matchStarted = true;
 		}
 		break;
 	case NON_COMPETITIVE:
@@ -206,11 +251,18 @@ void PacketManager::Matchmake(sf::Packet& data) {
 		}
 		else {
 			std::cout << "Non-competitive match found. Opening UDP socket..." << std::endl;
+			matchStarted = true;
 		}
 		break;
 	default:
 		std::cout << "Unknown matchmaking mode" << std::endl;
 		break;
+	}
+
+	if (matchStarted) {
+		udpSocket.bind(UDP_SERVER_PORT);
+		udpSocket.setBlocking(false);
+		udpConnected = true;
 	}
 }
 
@@ -237,6 +289,39 @@ void PacketManager::HandleMapRequest(sf::Packet& packet) {
 		SaveLocalMapVersion(serverVersion);
 
 		std::cout << "Map updated to the new version: " << serverVersion << std::endl;
+	}
+}
+
+void PacketManager::HandleMovement(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
+	movementPacketType movementType;
+	std::memcpy(&movementType, buffer + readPos, sizeof(movementType));
+	readPos += sizeof(movementType);
+
+	if (movementType == movementPacketType::RECEIVE_VALIDATED_MOVEMENT) {
+		unsigned short playerId;
+		unsigned short lastProcessedMovementID;
+		float x;
+		float y;
+
+
+		std::memcpy(&playerId, buffer + readPos, sizeof(playerId));
+		readPos += sizeof(playerId);
+
+		std::memcpy(&lastProcessedMovementID, buffer + readPos, sizeof(lastProcessedMovementID));
+		readPos += sizeof(lastProcessedMovementID);
+
+		std::memcpy(&x, buffer + readPos, sizeof(x));
+		readPos += sizeof(x);
+
+		std::memcpy(&y, buffer + readPos, sizeof(y));
+		readPos += sizeof(y);
+
+		if (playerId == myIndex) {
+			// Validation Local Player
+		}
+		else {
+			// Interpolation Online Player
+		}
 	}
 }
 
@@ -308,10 +393,10 @@ unsigned short PacketManager::LoadLocalMapVersion() {
 }
 
 void PacketManager::SaveLocalMap(const std::string& mapContent) {
-	std::ofstream file("resources/Maps/Map.txt", std::ios::trunc);
+	std::ofstream file("resources/Maps/Map.txt");
 
 	if (!file.is_open()) {
-		std::cerr << "No se pudo guardar el mapa local" << std::endl;
+		std::cerr << "Map file could not be opened" << std::endl;
 		return;
 	}
 
@@ -319,10 +404,10 @@ void PacketManager::SaveLocalMap(const std::string& mapContent) {
 }
 
 void PacketManager::SaveLocalMapVersion(unsigned short version) {
-	std::ofstream file("resources/Maps/map_version.txt", std::ios::trunc);
+	std::ofstream file("resources/Maps/map_version.txt");
 
 	if (!file.is_open()) {
-		std::cerr << "No se pudo guardar la version local del mapa" << std::endl;
+		std::cerr << "Map file could not be opened" << std::endl;
 		return;
 	}
 
@@ -356,20 +441,32 @@ void PacketManager::RankingRequest() {
 	}
 }
 
+void PacketManager::SendMovement(float x, float y, unsigned int movementID) {
+	char buffer[1024];
+	std::size_t bufferDataSize = 0;
 
-// Libera todos los recursos del gestor de paquetes, desconecta del servidor y de todos los jugadores, libera memoria de todos los sockets
-void PacketManager::Release() {
-	if (serverConnected) {
-		DisconnectFromServer();
+	udpPacketType packetType = udpPacketType::MOVEMENT;
+	movementPacketType movementType = movementPacketType::SEND_RAW_MOVEMENT;
+
+	std::memcpy(buffer + bufferDataSize, &packetType, sizeof(packetType));
+	bufferDataSize += sizeof(packetType);
+
+	std::memcpy(buffer + bufferDataSize, &movementType, sizeof(movementType));
+	bufferDataSize += sizeof(movementType);
+
+	std::memcpy(buffer + bufferDataSize, &movementID, sizeof(movementID));
+	bufferDataSize += sizeof(movementID);
+
+	std::memcpy(buffer + bufferDataSize, &x, sizeof(x));
+	bufferDataSize += sizeof(x);
+
+	std::memcpy(buffer + bufferDataSize, &y, sizeof(y));
+	bufferDataSize += sizeof(y);
+
+	if (udpSocket.send(buffer, bufferDataSize, UDP_SERVER_IP, UDP_SERVER_PORT) == sf::Socket::Status::Done) {
+		std::cout << "Movement data sent to server: " << std::endl;
 	}
-	for (std::pair<const short, sf::TcpSocket*>& entry : peerSockets) {
-		entry.second->disconnect();
-		delete entry.second;
+	else {
+		std::cerr << "Failed to send movement data to server" << std::endl;
 	}
-	peerSockets.clear();
-	for (sf::TcpSocket* s : pendingAccepts) {
-		s->disconnect();
-		delete s;
-	}
-	pendingAccepts.clear();
 }

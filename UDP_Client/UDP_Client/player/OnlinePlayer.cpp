@@ -72,7 +72,7 @@ void OnlinePlayer::Move() {
 void OnlinePlayer::UpdateAnimationFromMovement(const Vector2& oldPosition, const Vector2& newPosition) {
 	float deltaX = newPosition.x - oldPosition.x;
 
-	// Como solo recibimos posición, deducimos hacia dónde mira usando el movimiento horizontal
+	// Decidimos hacia dónde mira usando el movimiento horizontal
 	if (std::abs(deltaX) > animationMoveThreshold) {
 		lookingRight = deltaX > 0.0f;
 	}

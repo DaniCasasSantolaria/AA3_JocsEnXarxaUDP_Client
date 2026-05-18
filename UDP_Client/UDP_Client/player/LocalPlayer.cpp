@@ -2,6 +2,7 @@
 #include "../Managers/InputManager.h"
 #include <SFML/Window/Keyboard.hpp>
 #include <cmath>
+#include "../Managers/PacketManager.h"
 
 void LocalPlayer::Move() {
 	Vector2 velocity = physics->GetVelocity();
@@ -47,6 +48,15 @@ void LocalPlayer::Move() {
 void LocalPlayer::Update() {
 	Move();
 	isGrounded = false;
+
+	if(lastTimeSentMovement >= timeToSendMovement) {
+		PM->SendMovement(transform->position.x, transform->position.y, currentMovementID);
+		currentMovementID++;
+		lastTimeSentMovement = 0.0f;
+	}
+	else {
+		lastTimeSentMovement += TIME.GetDeltaTime();
+	}
 
 	ImageObject::Update();
 
