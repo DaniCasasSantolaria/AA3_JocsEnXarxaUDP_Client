@@ -258,9 +258,9 @@ void PacketManager::Matchmake(sf::Packet& data) {
 	}
 
 	if (matchStarted) {
-		if(udpSocket.bind(sf::Socket::AnyPort) == sf::Socket::Status::Done) {
-			udpSocket.setBlocking(false);
-			udpConnected = true;
+		if(udpSocket.bind(sf::Socket::AnyPort) == sf::Socket::Status::Done) {	//Bindeamos el Puerto a cualquier puerto. Al enviar mensajes si que usaremos
+			udpSocket.setBlocking(false);										//el UDP_SERVER_PORT, pero con esto hacemos que el cliente no tenga conflicto
+			udpConnected = true;												//al bindear el puerto en el mismo PC al usar varios clientes.
 		}
 		else {
 			std::cerr << "Failed to bind UDP socket to port " << UDP_SERVER_PORT << std::endl;
