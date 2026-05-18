@@ -128,8 +128,6 @@ void PacketManager::Update() {
 		if (udpSocket.receive(buffer, sizeof(buffer), receivedSize, senderIP, senderPort) == sf::Socket::Status::Done) {
 			std::size_t readPos = 0;
 
-			if (readPos + sizeof(udpPacketType) > receivedSize) return;
-
 			udpPacketType packetType;
 			std::memcpy(&packetType, buffer + readPos, sizeof(packetType));
 			readPos += sizeof(packetType);
