@@ -258,9 +258,13 @@ void PacketManager::Matchmake(sf::Packet& data) {
 	}
 
 	if (matchStarted) {
-		udpSocket.bind(UDP_SERVER_PORT);
-		udpSocket.setBlocking(false);
-		udpConnected = true;
+		if(udpSocket.bind(sf::Socket::AnyPort) == sf::Socket::Status::Done) {
+			udpSocket.setBlocking(false);
+			udpConnected = true;
+		}
+		else {
+			std::cerr << "Failed to bind UDP socket to port " << UDP_SERVER_PORT << std::endl;
+		}
 	}
 }
 
