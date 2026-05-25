@@ -51,7 +51,7 @@ class PacketManager {
 private:
     // Constantes de configuración de red
     unsigned const short LISTENER_PORT = 55007; // Port
-    const sf::IpAddress SERVER_IP = sf::IpAddress(10, 8, 0, 2); // IP
+    const sf::IpAddress SERVER_IP = sf::IpAddress(10, 8, 0, 3); // IP
 
     // TCP Sockets de comunicación
     sf::TcpSocket socket;
@@ -61,7 +61,7 @@ private:
 
     //UDP
     unsigned const short UDP_SERVER_PORT = 55008;
-    const sf::IpAddress UDP_SERVER_IP = sf::IpAddress(10, 8, 0, 2); // IP
+    const sf::IpAddress UDP_SERVER_IP = sf::IpAddress(10, 8, 0, 3); // IP
     sf::UdpSocket udpSocket;
     bool udpConnected = false;
     unsigned int urgentBitmask = 00000001;
