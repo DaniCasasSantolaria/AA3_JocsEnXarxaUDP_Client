@@ -41,29 +41,36 @@ void OnlinePlayer::Move() {
 	if (!pendingReceivedMovements.empty()) {
 		MovementReceive& target = pendingReceivedMovements.front();
 
-		Vector2 direction = target.position - transform->position;
+		float dx = target.position.x - transform->position.x;
+		float dy = target.position.y - transform->position.y;
 
-		float distance = std::sqrt(
-			direction.x * direction.x +
-			direction.y * direction.y
-		);
+		float maxStepX = moveSpeed * TIME.GetDeltaTime();
+		float maxStepY = verticalFollowSpeed * TIME.GetDeltaTime();
 
-		float maxStep = moveSpeed * TIME.GetDeltaTime();
-
-		if (distance <= maxStep || distance <= 0.001f) {
-			transform->position = target.position;
-
-			lastAppliedMovementId = target.movementId;
-
-			pendingReceivedMovements.erase(pendingReceivedMovements.begin());
+		if (std::abs(dx) <= maxStepX) {
+			transform->position.x = target.position.x;
 		}
 		else {
-			Vector2 normalizedDirection = Vector2(
-				direction.x / distance,
-				direction.y / distance
-			);
+			transform->position.x += (dx > 0.0f ? 1.0f : -1.0f) * maxStepX;
+		}
 
-			transform->position = transform->position + normalizedDirection * maxStep;
+		if (std::abs(dx) <= maxStepX) {
+			transform->position.x = target.position.x;
+		}
+		else {
+			transform->position.x += (dx > 0.0f ? 1.0f : -1.0f) * maxStepX;
+		}
+
+		float verticalLerpFactor = 0.6f;
+		transform->position.y = transform->position.y + (target.position.y - transform->position.y) * verticalLerpFactor;
+
+		float remainingDx = target.position.x - transform->position.x;
+		float remainingDy = target.position.y - transform->position.y;
+
+		if ((remainingDx * remainingDx + remainingDy * remainingDy) <= 1.0f) {
+			transform->position = target.position;
+			lastAppliedMovementId = target.movementId;
+			pendingReceivedMovements.erase(pendingReceivedMovements.begin());
 		}
 	}
 

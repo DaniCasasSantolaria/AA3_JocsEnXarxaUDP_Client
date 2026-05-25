@@ -15,8 +15,6 @@ void LocalPlayer::ApplyMovementInput(float direction, bool jump, float dt) {
 	}
 
 	physics->SetVelocity(velocity);
-
-	physics->Update(dt);
 }
 
 void LocalPlayer::ApplyServerValidation(unsigned int movementId, const Vector2& serverPosition) {
@@ -33,12 +31,15 @@ void LocalPlayer::ApplyServerValidation(unsigned int movementId, const Vector2& 
 		pendingSentMovements.erase(pendingSentMovements.begin());
 	}
 
-	// TP del player a la posición válida del servidor
-	transform->position = serverPosition;
+	Vector2 difference = serverPosition - transform->position;
 
-	// Reaplicar movimientos que el cliente ya ha hecho, pero el servidor aún no ha confirmado
-	for (SentMovement& movement : pendingSentMovements) {
-		ApplyMovementInput(movement.direction, movement.jump, movement.deltaTime);
+	float errorSquared = difference.x * difference.x + difference.y * difference.y;
+
+	float maxAllowedError = 250.0f;
+	float maxAllowedErrorSquared = maxAllowedError * maxAllowedError;
+
+	if (errorSquared > maxAllowedErrorSquared) {
+		transform->position = serverPosition;
 	}
 }
 
@@ -91,6 +92,7 @@ void LocalPlayer::Move() {
 
 void LocalPlayer::Update() {
 	Move();
+	ImageObject::Update();
 	isGrounded = false;
 
 	lastTimeSentMovement += TIME.GetDeltaTime();
@@ -101,8 +103,6 @@ void LocalPlayer::Update() {
 		sentMovement.direction = currentInputDirection;
 		sentMovement.jump = currentJumpInput;
 		sentMovement.deltaTime = lastTimeSentMovement;
-		sentMovement.position = transform->position;
-		sentMovement.velocity = physics->GetVelocity();
 
 		pendingSentMovements.push_back(sentMovement);
 
@@ -111,8 +111,6 @@ void LocalPlayer::Update() {
 		currentMovementID++;
 		lastTimeSentMovement = 0.0f;
 	}
-
-	ImageObject::Update();
 
 	Shoot();
 }

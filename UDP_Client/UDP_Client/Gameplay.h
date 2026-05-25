@@ -3,6 +3,7 @@
 #include "MenuElements/Button.h"
 #include "Gameplay/GridBox.h"
 #include "player/OnlinePlayer.h"
+#include "player/LocalPlayer.h"
 
 #define MAX_ROWS 6
 #define MAX_COLS 8

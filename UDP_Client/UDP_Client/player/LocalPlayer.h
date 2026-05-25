@@ -13,9 +13,6 @@ private:
 		float direction = 0.0f;
 		bool jump = false;
 		float deltaTime = 0.0f;
-
-		Vector2 position = Vector2(0.0f, 0.0f); // opcional/debug
-		Vector2 velocity = Vector2(0.0f, 0.0f); // opcional/debug
 	};
 
 	unsigned int lastValidatedMovementId = 0;
