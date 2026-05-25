@@ -175,14 +175,18 @@ void PacketManager::Login(sf::Packet& data) {
 	std::string pass;
 	authResult result;
 	int score = 0;
+	unsigned short myPlayerIndex = 0;
 
 	data >> user;
 	data >> pass;
 	data >> result;
 	data >> score;
+	data >> myPlayerIndex;
+
 
 	playerInfo.username = user;
 	playerInfo.score = score;
+	myIndex = myPlayerIndex;
 
 
 	switch (result) {
@@ -321,12 +325,22 @@ void PacketManager::HandleMovement(const char* buffer, std::size_t receivedSize,
 
 		if (playerId == myIndex) {
 			// Validation Local Player
+			std::cout << "My own ID: " << myIndex << std::endl;
+			std::cout << "Received validated movement for my player " << playerId << ": " << std::endl;
+			std::cout << "Position: (" << x << ", " << y << ")" << std::endl;
+			std::cout << "Last Processed Movement ID: " << lastProcessedMovementID << std::endl;
 		}
 		else {
 			// Interpolation Online Player
 			std::cout << "Received validated movement for player " << playerId << ": " << std::endl;
 			std::cout << "Position: (" << x << ", " << y << ")" << std::endl;
 			std::cout << "Last Processed Movement ID: " << lastProcessedMovementID << std::endl;
+
+			OnlineMovement movement;
+			movement.movementId = lastProcessedMovementID;
+			movement.position = Vector2(x, y);
+
+			pendingOnlineMovements.push(movement);
 		}
 	}
 }
@@ -475,4 +489,10 @@ void PacketManager::SendMovement(float x, float y, unsigned int movementID) {
 	else {
 		std::cerr << "Failed to send movement data to server" << std::endl;
 	}
+}
+
+PacketManager::OnlineMovement PacketManager::PopPendingOnlineMovement() {
+	OnlineMovement movement = pendingOnlineMovements.front();
+	pendingOnlineMovements.pop();
+	return movement;
 }

@@ -6,6 +6,7 @@
 #include <vector>
 #include <queue>
 #include <utility>
+#include "../Vector2.h"
 
 #define PM PacketManager::Instance()
 
@@ -131,6 +132,12 @@ public:
         unsigned short position;
     };
 
+    //Movimiento online
+    struct OnlineMovement {
+        unsigned int movementId = 0;
+        Vector2 position = Vector2(0.0f, 0.0f);
+    };
+
     // Variables públicas del juego
     std::vector<PlayerScore> ranking = std::vector<PlayerScore>();
     std::string myUsername;
@@ -178,4 +185,12 @@ public:
 
     //MOVEMENT
 	void SendMovement(float x, float y, unsigned int movementID);
+    inline bool HasPendingOnlineMovement() const {
+        return !pendingOnlineMovements.empty();
+    }
+    OnlineMovement PopPendingOnlineMovement();
+
+private:
+    //Movement
+    std::queue<OnlineMovement> pendingOnlineMovements;
 };
