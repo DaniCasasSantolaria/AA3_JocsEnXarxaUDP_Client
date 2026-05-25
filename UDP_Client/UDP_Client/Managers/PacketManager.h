@@ -10,28 +10,59 @@
 #define PM PacketManager::Instance()
 
 // Enum de tipos de paquetes que se pueden enviar/recibir
-enum packetType { HANDSHAKE, LOGIN, REGISTER, RANKING, MATCHMAKE, WIN_NOTIFICATION, GAME_RESULT, MAP_REQUEST };
-enum udpPacketType { MOVEMENT };
+//TCP
+enum packetType { 
+    HANDSHAKE, 
+    LOGIN, 
+    REGISTER, 
+    RANKING, 
+    MATCHMAKE,
+    WIN_NOTIFICATION, 
+    GAME_RESULT,
+    MAP_REQUEST };
+
+//UDP
+enum udpPacketType {
+    MOVEMENT,
+    REGISTER_CLIENT,
+    SHOOT,
+    HIT,
+    PING
+};
 
 // Enum de resultados posibles en autenticación
-enum authResult { LOGIN_OK, USER_NOT_FOUND, WRONG_PASSWORD, REGISTER_OK, USER_ALREADY_EXISTS };
+enum authResult { 
+    LOGIN_OK, 
+    USER_NOT_FOUND,
+    WRONG_PASSWORD, 
+    REGISTER_OK, 
+    USER_ALREADY_EXISTS };
 
-enum matchMode { NON_COMPETITIVE, COMPETITIVE };
+enum matchMode { 
+    NON_COMPETITIVE, 
+    COMPETITIVE };
 
-enum matchmakeStatus { QUEUE_WAITING, MATCH_FOUND };
+enum matchmakeStatus { 
+    QUEUE_WAITING, 
+    MATCH_FOUND };
 
-enum mapRequestType { MAP_VERSION_CHECK, MAP_UP_TO_DATE, MAP_UPDATE };
+enum mapRequestType { 
+    MAP_VERSION_CHECK, 
+    MAP_UP_TO_DATE, 
+    MAP_UPDATE };
 
-enum movementPacketType { SEND_RAW_MOVEMENT, RECEIVE_VALIDATED_MOVEMENT };
+enum movementPacketType {
+    SEND_RAW_MOVEMENT,
+    RECEIVE_VALIDATED_MOVEMENT
+};
 
 // Información básica del jugador
 struct PlayerInfo {
-    std::string username;
-    int score;
+    std::string username = "";
+    int score = 0;
 };
 
 #define MAX_PLAYERS 4
-
 
 sf::Packet& operator <<(sf::Packet& packet, packetType type);
 sf::Packet& operator <<(sf::Packet& packet, authResult result);
@@ -61,7 +92,7 @@ private:
 
     //UDP
     unsigned const short UDP_SERVER_PORT = 55008;
-    const sf::IpAddress UDP_SERVER_IP = sf::IpAddress(10, 8, 0, 3); // IP
+    const sf::IpAddress UDP_SERVER_IP = sf::IpAddress(10, 8, 0, 4); // IP
     sf::UdpSocket udpSocket;
     bool udpConnected = false;
     unsigned int urgentBitmask = 00000001;

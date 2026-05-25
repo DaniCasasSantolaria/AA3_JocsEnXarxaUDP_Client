@@ -7,6 +7,7 @@
 #include "Managers/PacketManager.h"
 #include "Maps/TileMap.h"
 #include "player/LocalPlayer.h"
+#include "player/OnlinePlayer.h"
 
 #define GRID_WIDTH 1000.0f
 #define GRID_HEIGHT 800.0f
@@ -33,8 +34,13 @@ void Gameplay::OnEnter() {
 
     Player* player = new LocalPlayer("resources/Tilesets/knight.png", Vector2(0.0f, 0.0f), Vector2(32.0f, 32.0f), 0, 4, 0.1f, true, 1.0f, 3);
 	player->GetTransform()->scale = Vector2(3.0f, 3.0f);
-    player->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f, RM->WINDOW_HEIGHT / 2.0f);
+    player->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f - 200.0f, RM->WINDOW_HEIGHT / 2.0f);
     SPAWN.SpawnObject(player);
+
+	Player* onlinePlayer = new OnlinePlayer("resources/Tilesets/knight.png", Vector2(0.0f, 0.0f), Vector2(32.0f, 32.0f), 0, 4, 0.1f, true, 1.0f, 3);
+	onlinePlayer->GetTransform()->scale = Vector2(3.0f, 3.0f);
+    onlinePlayer->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f + 200.0f, RM->WINDOW_HEIGHT / 2.0f);
+    SPAWN.SpawnObject(onlinePlayer);
 }
 
 void Gameplay::OnExit() {

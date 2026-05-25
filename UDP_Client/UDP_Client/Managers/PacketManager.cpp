@@ -259,7 +259,7 @@ void PacketManager::Matchmake(sf::Packet& data) {
 
 	if (matchStarted) {
 		SM.SetNextScene("Gameplay");
-		if(udpSocket.bind(sf::Socket::AnyPort) == sf::Socket::Status::Done) {	//Bindeamos el Puerto a cualquier puerto. Al enviar mensajes si que usaremos
+		if(udpSocket.bind(UDP_SERVER_PORT) == sf::Socket::Status::Done) {	//Bindeamos el Puerto a cualquier puerto. Al enviar mensajes si que usaremos
 			udpSocket.setBlocking(false);										//el UDP_SERVER_PORT, pero con esto hacemos que el cliente no tenga conflicto
 			udpConnected = true;												//al bindear el puerto en el mismo PC al usar varios clientes.
 		}
@@ -324,6 +324,9 @@ void PacketManager::HandleMovement(const char* buffer, std::size_t receivedSize,
 		}
 		else {
 			// Interpolation Online Player
+			std::cout << "Received validated movement for player " << playerId << ": " << std::endl;
+			std::cout << "Position: (" << x << ", " << y << ")" << std::endl;
+			std::cout << "Last Processed Movement ID: " << lastProcessedMovementID << std::endl;
 		}
 	}
 }
