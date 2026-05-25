@@ -27,7 +27,7 @@ public:
 
 	OnlinePlayer(std::string texturepath, Vector2 sourceOffset, Vector2 sourceSize, unsigned short numRows, unsigned short numColumns, float frameTime,
 		bool hasToLoop,	float shootCooldown, short life)
-		: Player(texturepath, sourceOffset, sourceSize, numRows, numColumns, frameTime, hasToLoop, shootCooldown, life) {
+		: Player(texturepath, sourceOffset, sourceSize, numRows, numColumns, frameTime, hasToLoop, shootCooldown, life, false) {
 		this->GetRigidbody()->SetGravity(0.0f);
 		this->GetRigidbody()->SetVelocity(Vector2(0.0f, 0.0f));
 	}

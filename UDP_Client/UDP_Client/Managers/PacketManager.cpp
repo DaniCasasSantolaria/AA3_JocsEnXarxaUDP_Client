@@ -306,7 +306,7 @@ void PacketManager::HandleMovement(const char* buffer, std::size_t receivedSize,
 
 	if (movementType == movementPacketType::RECEIVE_VALIDATED_MOVEMENT) {
 		unsigned short playerId;
-		unsigned short lastProcessedMovementID;
+		unsigned int lastProcessedMovementID;
 		float x;
 		float y;
 
@@ -325,10 +325,10 @@ void PacketManager::HandleMovement(const char* buffer, std::size_t receivedSize,
 
 		if (playerId == myIndex) {
 			// Validation Local Player
-			std::cout << "My own ID: " << myIndex << std::endl;
+			/*std::cout << "My own ID: " << myIndex << std::endl;
 			std::cout << "Received validated movement for my player " << playerId << ": " << std::endl;
 			std::cout << "Position: (" << x << ", " << y << ")" << std::endl;
-			std::cout << "Last Processed Movement ID: " << lastProcessedMovementID << std::endl;
+			std::cout << "Last Processed Movement ID: " << lastProcessedMovementID << std::endl;*/
 		}
 		else {
 			// Interpolation Online Player

@@ -32,8 +32,8 @@ protected:
 public:
 	Player() = default;
 	Player(std::string texturepath, Vector2 sourceOffset, Vector2 sourceSize, unsigned short numRows, unsigned short numColumns, 
-		float frameTime, bool hasToLoop, float shootCooldown, short life)
-		: ImageObject(texturepath, sourceOffset, sourceSize, numRows, numColumns, frameTime, hasToLoop), Shooting(shootCooldown),
+		float frameTime, bool hasToLoop, float shootCooldown, short life, bool hasCollision)
+		: ImageObject(texturepath, sourceOffset, sourceSize, numRows, numColumns, frameTime, hasToLoop, hasCollision), Shooting(shootCooldown),
 		maxLifes(life) { 
 		this->life = maxLifes;
 
