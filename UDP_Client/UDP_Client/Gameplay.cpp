@@ -31,10 +31,10 @@ void Gameplay::OnEnter() {
     TileMap tileMap;
     tileMap.LoadFromFile("resources/Maps/Map.txt");
 
-    Player* player = new LocalPlayer("resources/Tilesets/knight.png", Vector2(0.0f, 0.0f), Vector2(32.0f, 32.0f), 0, 4, 0.1f, true, 1.0f, 3);
-	player->GetTransform()->scale = Vector2(3.0f, 3.0f);
-    player->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f - 200.0f, RM->WINDOW_HEIGHT / 2.0f);
-    SPAWN.SpawnObject(player);
+    localPlayer = new LocalPlayer("resources/Tilesets/knight.png", Vector2(0.0f, 0.0f), Vector2(32.0f, 32.0f), 0, 4, 0.1f, true, 1.0f, 3);
+    localPlayer->GetTransform()->scale = Vector2(3.0f, 3.0f);
+    localPlayer->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f - 200.0f, RM->WINDOW_HEIGHT / 2.0f);
+    SPAWN.SpawnObject(localPlayer);
 
 	onlinePlayer = new OnlinePlayer("resources/Tilesets/knight.png", Vector2(0.0f, 0.0f), Vector2(32.0f, 32.0f), 0, 4, 0.1f, true, 1.0f, 3);
 	onlinePlayer->GetTransform()->scale = Vector2(3.0f, 3.0f);
@@ -104,14 +104,32 @@ void Gameplay::FinishGame()
 }
 
 void Gameplay::Update() {
-    while (PM->HasPendingOnlineMovement() && onlinePlayer != nullptr) {
-        PacketManager::OnlineMovement movement = PM->PopPendingOnlineMovement();
+    if (onlinePlayer != nullptr) {
+        bool hasMovement = false;
+        PacketManager::OnlineMovement latestMovement;
 
-        onlinePlayer->AddServerMovement(
-            movement.movementId,
-            movement.position
+        while (PM->HasPendingOnlineMovement()) {
+            latestMovement = PM->PopPendingOnlineMovement();
+            hasMovement = true;
+        }
+
+        if (hasMovement) {
+            onlinePlayer->AddServerMovement(
+                latestMovement.movementId,
+                latestMovement.position
+            );
+        }
+    }
+
+    while (PM->HasPendingLocalValidation() && localPlayer != nullptr) {
+        PacketManager::LocalValidation validation = PM->PopPendingLocalValidation();
+
+        localPlayer->ApplyServerValidation(
+            validation.movementId,
+            validation.position
         );
     }
+
 
     Scene::Update();
 

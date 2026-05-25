@@ -12,6 +12,7 @@ class Gameplay : public Scene {
 private:
 	bool gameFinished = false;
 	OnlinePlayer* onlinePlayer = nullptr;
+	LocalPlayer* localPlayer = nullptr;
 
 	bool CheckWinCondition(short row, short col);
 

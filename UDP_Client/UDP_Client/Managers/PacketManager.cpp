@@ -120,12 +120,13 @@ void PacketManager::Update() {
 		}
 	}
 
-	if(udpConnected) {
+	if (udpConnected) {
 		char buffer[1024];
 		std::size_t receivedSize;
-		std::optional <sf::IpAddress> senderIP;
+		std::optional<sf::IpAddress> senderIP;
 		unsigned short senderPort;
-		if (udpSocket.receive(buffer, sizeof(buffer), receivedSize, senderIP, senderPort) == sf::Socket::Status::Done) {
+
+		while (udpSocket.receive(buffer, sizeof(buffer), receivedSize, senderIP, senderPort) == sf::Socket::Status::Done) {
 			std::size_t readPos = 0;
 
 			udpPacketType packetType;
@@ -324,17 +325,23 @@ void PacketManager::HandleMovement(const char* buffer, std::size_t receivedSize,
 		readPos += sizeof(y);
 
 		if (playerId == myIndex) {
-			// Validation Local Player
+			// Validacion Local Player
 			/*std::cout << "My own ID: " << myIndex << std::endl;
 			std::cout << "Received validated movement for my player " << playerId << ": " << std::endl;
 			std::cout << "Position: (" << x << ", " << y << ")" << std::endl;
 			std::cout << "Last Processed Movement ID: " << lastProcessedMovementID << std::endl;*/
+
+			LocalValidation validation;
+			validation.movementId = lastProcessedMovementID;
+			validation.position = Vector2(x, y);
+
+			pendingLocalValidations.push(validation);
 		}
 		else {
-			// Interpolation Online Player
-			std::cout << "Received validated movement for player " << playerId << ": " << std::endl;
-			std::cout << "Position: (" << x << ", " << y << ")" << std::endl;
-			std::cout << "Last Processed Movement ID: " << lastProcessedMovementID << std::endl;
+			// Interpolacion Online Player
+			//std::cout << "Received validated movement for player " << playerId << ": " << std::endl;
+			//std::cout << "Position: (" << x << ", " << y << ")" << std::endl;
+			//std::cout << "Last Processed Movement ID: " << lastProcessedMovementID << std::endl;
 
 			OnlineMovement movement;
 			movement.movementId = lastProcessedMovementID;
@@ -483,10 +490,7 @@ void PacketManager::SendMovement(float x, float y, unsigned int movementID) {
 	std::memcpy(buffer + bufferDataSize, &y, sizeof(y));
 	bufferDataSize += sizeof(y);
 
-	if (udpSocket.send(buffer, bufferDataSize, UDP_SERVER_IP, UDP_SERVER_PORT) == sf::Socket::Status::Done) {
-		std::cout << "Movement data sent to server: " << std::endl;
-	}
-	else {
+	if (udpSocket.send(buffer, bufferDataSize, UDP_SERVER_IP, UDP_SERVER_PORT) != sf::Socket::Status::Done) {
 		std::cerr << "Failed to send movement data to server" << std::endl;
 	}
 }
@@ -495,4 +499,10 @@ PacketManager::OnlineMovement PacketManager::PopPendingOnlineMovement() {
 	OnlineMovement movement = pendingOnlineMovements.front();
 	pendingOnlineMovements.pop();
 	return movement;
+}
+
+PacketManager::LocalValidation PacketManager::PopPendingLocalValidation() {
+	LocalValidation validation = pendingLocalValidations.front();
+	pendingLocalValidations.pop();
+	return validation;
 }

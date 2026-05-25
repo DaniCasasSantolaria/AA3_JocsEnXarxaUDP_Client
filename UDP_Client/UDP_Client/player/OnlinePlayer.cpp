@@ -1,4 +1,5 @@
 #include "OnlinePlayer.h"
+#include "../Managers/TimeManager.h"
 #include <cmath>
 
 // Funciones matemáticas de Lerp y DistanceSquared hechas con IA
@@ -14,23 +15,17 @@ float OnlinePlayer::DistanceSquared(const Vector2& a, const Vector2& b) {
 }
 
 void OnlinePlayer::AddServerMovement(unsigned int movementId, const Vector2& serverPosition) {
-	// Si el paquete ya es antiguo
 	if (movementId <= lastAppliedMovementId) {
 		return;
 	}
+
+	pendingReceivedMovements.clear();
 
 	MovementReceive newMovement;
 	newMovement.movementId = movementId;
 	newMovement.position = serverPosition;
 
-	// Ordenamos los movimientos recibidos por el ID para asegurarnos de aplicar el orden correcto y evitar problemas de paquetes desordenados
-	std::vector<MovementReceive>::iterator it = pendingReceivedMovements.begin();
-
-	while (it != pendingReceivedMovements.end() && it->movementId < movementId) {
-		++it;
-	}
-
-	pendingReceivedMovements.insert(it, newMovement);
+	pendingReceivedMovements.push_back(newMovement);
 }
 
 void OnlinePlayer::Move() {
@@ -46,12 +41,16 @@ void OnlinePlayer::Move() {
 	if (!pendingReceivedMovements.empty()) {
 		MovementReceive& target = pendingReceivedMovements.front();
 
-		float distanceToTarget = DistanceSquared(transform->position, target.position);
+		Vector2 direction = target.position - transform->position;
 
-		float snapDistanceSquared = snapDistance * snapDistance;
+		float distance = std::sqrt(
+			direction.x * direction.x +
+			direction.y * direction.y
+		);
 
-		// Si ya estamos muy cerca del target, hacemos TP a la posición exacta
-		if (distanceToTarget <= snapDistanceSquared) {
+		float maxStep = moveSpeed * TIME.GetDeltaTime();
+
+		if (distance <= maxStep || distance <= 0.001f) {
 			transform->position = target.position;
 
 			lastAppliedMovementId = target.movementId;
@@ -59,8 +58,12 @@ void OnlinePlayer::Move() {
 			pendingReceivedMovements.erase(pendingReceivedMovements.begin());
 		}
 		else {
-			// Interpolación hacia la posición recibida del servidor
-			transform->position = Lerp(transform->position,	target.position, interpolationFactor);
+			Vector2 normalizedDirection = Vector2(
+				direction.x / distance,
+				direction.y / distance
+			);
+
+			transform->position = transform->position + normalizedDirection * maxStep;
 		}
 	}
 

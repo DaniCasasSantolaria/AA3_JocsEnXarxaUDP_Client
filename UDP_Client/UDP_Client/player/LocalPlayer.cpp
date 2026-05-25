@@ -4,6 +4,44 @@
 #include <cmath>
 #include "../Managers/PacketManager.h"
 
+void LocalPlayer::ApplyMovementInput(float direction, bool jump, float dt) {
+	Vector2 velocity = physics->GetVelocity();
+
+	velocity.x = direction * moveSpeed;
+
+	if (jump && isGrounded) {
+		velocity.y = jumpVelocity;
+		isGrounded = false;
+	}
+
+	physics->SetVelocity(velocity);
+
+	physics->Update(dt);
+}
+
+void LocalPlayer::ApplyServerValidation(unsigned int movementId, const Vector2& serverPosition) {
+	// Ignorar validaciones antiguas
+	if (movementId <= lastValidatedMovementId) {
+		return;
+	}
+
+	lastValidatedMovementId = movementId;
+
+	// Borrar movimientos confirmados
+	while (!pendingSentMovements.empty() &&
+		pendingSentMovements.front().movementId <= movementId) {
+		pendingSentMovements.erase(pendingSentMovements.begin());
+	}
+
+	// TP del player a la posición válida del servidor
+	transform->position = serverPosition;
+
+	// Reaplicar movimientos que el cliente ya ha hecho, pero el servidor aún no ha confirmado
+	for (SentMovement& movement : pendingSentMovements) {
+		ApplyMovementInput(movement.direction, movement.jump, movement.deltaTime);
+	}
+}
+
 void LocalPlayer::Move() {
 	Vector2 velocity = physics->GetVelocity();
 
@@ -23,10 +61,16 @@ void LocalPlayer::Move() {
 
 	velocity.x = direction * moveSpeed;
 
+	bool jumpPressed = false;
+
 	if (Input.GetEvent(sf::Keyboard::Key::Space, KeyState::DOWN) && isGrounded) {
 		velocity.y = jumpVelocity;
 		isGrounded = false;
+		jumpPressed = true;
 	}
+
+	currentInputDirection = direction;
+	currentJumpInput = jumpPressed;
 
 	physics->SetVelocity(velocity);
 
@@ -49,13 +93,23 @@ void LocalPlayer::Update() {
 	Move();
 	isGrounded = false;
 
-	if(lastTimeSentMovement >= timeToSendMovement) {
+	lastTimeSentMovement += TIME.GetDeltaTime();
+
+	if (lastTimeSentMovement >= timeToSendMovement) {
+		SentMovement sentMovement;
+		sentMovement.movementId = currentMovementID;
+		sentMovement.direction = currentInputDirection;
+		sentMovement.jump = currentJumpInput;
+		sentMovement.deltaTime = lastTimeSentMovement;
+		sentMovement.position = transform->position;
+		sentMovement.velocity = physics->GetVelocity();
+
+		pendingSentMovements.push_back(sentMovement);
+
 		PM->SendMovement(transform->position.x, transform->position.y, currentMovementID);
+
 		currentMovementID++;
 		lastTimeSentMovement = 0.0f;
-	}
-	else {
-		lastTimeSentMovement += TIME.GetDeltaTime();
 	}
 
 	ImageObject::Update();

@@ -138,6 +138,11 @@ public:
         Vector2 position = Vector2(0.0f, 0.0f);
     };
 
+    struct LocalValidation {
+        unsigned int movementId = 0;
+        Vector2 position = Vector2(0.0f, 0.0f);
+    };
+
     // Variables públicas del juego
     std::vector<PlayerScore> ranking = std::vector<PlayerScore>();
     std::string myUsername;
@@ -190,7 +195,13 @@ public:
     }
     OnlineMovement PopPendingOnlineMovement();
 
+    inline bool HasPendingLocalValidation() const {
+        return !pendingLocalValidations.empty();
+    }
+    LocalValidation PopPendingLocalValidation();
+
 private:
     //Movement
     std::queue<OnlineMovement> pendingOnlineMovements;
+    std::queue<LocalValidation> pendingLocalValidations;
 };
