@@ -87,9 +87,6 @@ private:
 
     // TCP Sockets de comunicación
     sf::TcpSocket socket;
-    sf::TcpListener myListener;
-    std::map<short, sf::TcpSocket*> peerSockets;
-    std::vector<sf::TcpSocket*> pendingAccepts;
 
     //UDP
     unsigned const short UDP_SERVER_PORT = 55008;
@@ -104,12 +101,6 @@ private:
     short myIndex = -1;
     unsigned short totalPlayers = 0;
     bool serverConnected = false;
-    bool p2pReady = false;
-    std::string currentLobbyId;
-
-    // Colas de eventos pendientes de procesar
-    std::queue<std::pair<short, sf::Packet>> pendingActions;
-    std::queue<std::pair<short, PlayerInfo>> pendingPlayerInfo;
 
     PacketManager() = default;
     PacketManager(PacketManager&) = delete;

@@ -13,10 +13,7 @@ private:
 
 	unsigned int lastAppliedMovementId = 0;
 
-	float interpolationFactor = 0.35f;
-	float snapDistance = 0.5f;
 	float animationMoveThreshold = 0.5f;
-	float verticalFollowSpeed = 2500.0f;
 
 	static Vector2 Lerp(const Vector2& a, const Vector2& b, float t);
 	static float DistanceSquared(const Vector2& a, const Vector2& b);

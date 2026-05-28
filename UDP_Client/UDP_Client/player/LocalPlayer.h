@@ -10,15 +10,10 @@ private:
 
 	struct SentMovement {
 		unsigned int movementId = 0;
-		float direction = 0.0f;
-		bool jump = false;
-		float deltaTime = 0.0f;
+		Vector2 position = Vector2(0.0f, 0.0f);
 	};
 
 	unsigned int lastValidatedMovementId = 0;
-
-	float currentInputDirection = 0.0f;
-	bool currentJumpInput = false;
 
 	std::vector<SentMovement> pendingSentMovements;
 
@@ -35,4 +30,5 @@ public:
 
 	void Move() override;
 	void Update() override;
+	void TrySendMovement();
 };

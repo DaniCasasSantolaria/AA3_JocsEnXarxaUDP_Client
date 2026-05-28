@@ -25,21 +25,35 @@ void LocalPlayer::ApplyServerValidation(unsigned int movementId, const Vector2& 
 
 	lastValidatedMovementId = movementId;
 
+	Vector2 predictedPosition = serverPosition;
+	bool foundPrediction = false;
+
+	for (SentMovement& movement : pendingSentMovements) {
+		if (movement.movementId == movementId) {
+			predictedPosition = movement.position;
+			foundPrediction = true;
+			break;
+		}
+	}
+
 	// Borrar movimientos confirmados
 	while (!pendingSentMovements.empty() &&
 		pendingSentMovements.front().movementId <= movementId) {
 		pendingSentMovements.erase(pendingSentMovements.begin());
 	}
 
-	Vector2 difference = serverPosition - transform->position;
+	Vector2 correction = serverPosition - predictedPosition;
 
-	float errorSquared = difference.x * difference.x + difference.y * difference.y;
+	float errorSquared = correction.x * correction.x + correction.y * correction.y;
 
-	float maxAllowedError = 250.0f;
-	float maxAllowedErrorSquared = maxAllowedError * maxAllowedError;
+	float minCorrection = 1.0f;
+	float maxSnapError = 250.0f;
 
-	if (errorSquared > maxAllowedErrorSquared) {
+	if (errorSquared > maxSnapError * maxSnapError) {
 		transform->position = serverPosition;
+	}
+	else if (foundPrediction && errorSquared > minCorrection * minCorrection) {
+		transform->position = transform->position + correction;
 	}
 }
 
@@ -70,9 +84,6 @@ void LocalPlayer::Move() {
 		jumpPressed = true;
 	}
 
-	currentInputDirection = direction;
-	currentJumpInput = jumpPressed;
-
 	physics->SetVelocity(velocity);
 
 	if (lookingRight) {
@@ -94,23 +105,22 @@ void LocalPlayer::Update() {
 	Move();
 	ImageObject::Update();
 	isGrounded = false;
+	Shoot();
+}
 
+void LocalPlayer::TrySendMovement() {
 	lastTimeSentMovement += TIME.GetDeltaTime();
 
 	if (lastTimeSentMovement >= timeToSendMovement) {
 		SentMovement sentMovement;
 		sentMovement.movementId = currentMovementID;
-		sentMovement.direction = currentInputDirection;
-		sentMovement.jump = currentJumpInput;
-		sentMovement.deltaTime = lastTimeSentMovement;
+		sentMovement.position = transform->position;
 
 		pendingSentMovements.push_back(sentMovement);
 
 		PM->SendMovement(transform->position.x, transform->position.y, currentMovementID);
 
 		currentMovementID++;
-		lastTimeSentMovement = 0.0f;
+		lastTimeSentMovement -= timeToSendMovement;
 	}
-
-	Shoot();
 }

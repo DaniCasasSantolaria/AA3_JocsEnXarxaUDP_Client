@@ -10,13 +10,8 @@
 
 #define GRID_WIDTH 1000.0f
 #define GRID_HEIGHT 800.0f
-#define GRID_OFFSET_X 500.0f
-#define GRID_OFFSET_Y 50.0f
 
 void Gameplay::OnEnter() {
-    //Pata obtener ID del jugador y el total de jugadores, para luego enviar la info a los demas
-    //PM->SendPlayerInfoToAll();
-
     gameFinished = false;
 
     Object* background = new ImageObject("resources/Gameplay/GameplayBackground.png", Vector2{ 0, 0 }, Vector2{ 1536, 1024 });
@@ -24,9 +19,6 @@ void Gameplay::OnEnter() {
     background->GetTransform()->scale = { 1.0f, 1.0f };
     background->GetRigidbody()->ClearColliders();
     SPAWN.SpawnObject(background);
-
-    float width = GRID_WIDTH / MAX_COLS;
-    float height = GRID_HEIGHT / MAX_ROWS;
 
     TileMap tileMap;
     tileMap.LoadFromFile("resources/Maps/Map.txt");
@@ -105,18 +97,12 @@ void Gameplay::FinishGame()
 
 void Gameplay::Update() {
     if (onlinePlayer != nullptr) {
-        bool hasMovement = false;
-        PacketManager::OnlineMovement latestMovement;
-
         while (PM->HasPendingOnlineMovement()) {
-            latestMovement = PM->PopPendingOnlineMovement();
-            hasMovement = true;
-        }
+            PacketManager::OnlineMovement movement = PM->PopPendingOnlineMovement();
 
-        if (hasMovement) {
             onlinePlayer->AddServerMovement(
-                latestMovement.movementId,
-                latestMovement.position
+                movement.movementId,
+                movement.position
             );
         }
     }
@@ -132,34 +118,12 @@ void Gameplay::Update() {
 
 
     Scene::Update();
+    
+    if (localPlayer != nullptr) {
+        localPlayer->TrySendMovement();
+    }
 
     if (gameFinished) return;
-
-    // Procesa las desconexiones de los jugadores
-    // Actualizando el turno si es necesario y finalizando el juego si quedan 1 o ningún jugador activo
-    //while (PM->HasPendingDisconnect()) {
-    //    short disconnectedID = PM->PopPendingDisconnect();
-    //    std::cout << "Player " << disconnectedID << " left the game" << std::endl;
-
-    //    if (currentPlayerIDTurn == disconnectedID) {
-    //        ChangeTurn();
-    //        currentMoveTime = 0.0f;
-    //    }
-
-    //    if (ShouldFinishGame()) {
-    //        FinishGame();
-    //        return;
-    //    }
-    //}
-
-    //if (CheckWinCondition(row, col)) {
-    //    std::cout << "Player " << playerID << " wins!" << std::endl;
-    //}
-
-    //if (ShouldFinishGame()) {
-    //    FinishGame();
-    //    return;
-    //}
 }
 
 void Gameplay::Render() {

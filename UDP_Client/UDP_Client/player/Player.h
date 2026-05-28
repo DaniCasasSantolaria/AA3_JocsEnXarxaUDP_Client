@@ -28,7 +28,6 @@ protected:
 	float gravity = 2980.0f;
 
 	PlayerState currentState = PlayerState::IDLE;
-	Vector2 currentDirection = Vector2(0, 0);
 public:
 	Player() = default;
 	Player(std::string texturepath, Vector2 sourceOffset, Vector2 sourceSize, unsigned short numRows, unsigned short numColumns, 

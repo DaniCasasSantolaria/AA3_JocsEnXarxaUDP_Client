@@ -1,31 +1,37 @@
 #include "OnlinePlayer.h"
 #include "../Managers/TimeManager.h"
 #include <cmath>
-
-// Funciones matemáticas de Lerp y DistanceSquared hechas con IA
-Vector2 OnlinePlayer::Lerp(const Vector2& a, const Vector2& b, float t) {
-	return Vector2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
-}
-
-float OnlinePlayer::DistanceSquared(const Vector2& a, const Vector2& b) {
-	float dx = a.x - b.x;
-	float dy = a.y - b.y;
-
-	return dx * dx + dy * dy;
-}
+#include <algorithm>
 
 void OnlinePlayer::AddServerMovement(unsigned int movementId, const Vector2& serverPosition) {
 	if (movementId <= lastAppliedMovementId) {
 		return;
 	}
 
-	pendingReceivedMovements.clear();
+	for (MovementReceive& movement : pendingReceivedMovements) {
+		if (movement.movementId == movementId) {
+			return;
+		}
+	}
 
 	MovementReceive newMovement;
 	newMovement.movementId = movementId;
 	newMovement.position = serverPosition;
 
 	pendingReceivedMovements.push_back(newMovement);
+
+	//HECHO CON IA PARA ORDENAR LOS MOVIMIENTOS POR ID, ASI SE APLICAN EN ORDEN CORRECTO
+	std::sort(pendingReceivedMovements.begin(), pendingReceivedMovements.end(),
+		[](const MovementReceive& a, const MovementReceive& b) {
+			return a.movementId < b.movementId;
+		}
+	);
+
+	const unsigned int maxBufferedMovements = 8;
+
+	while (pendingReceivedMovements.size() > maxBufferedMovements) {
+		pendingReceivedMovements.erase(pendingReceivedMovements.begin());
+	}
 }
 
 void OnlinePlayer::Move() {
@@ -33,8 +39,15 @@ void OnlinePlayer::Move() {
 
 	Vector2 oldPosition = transform->position;
 
-	// Eliminamos movimientos antiguos que hayan quedado
-	while (!pendingReceivedMovements.empty() &&	pendingReceivedMovements.front().movementId <= lastAppliedMovementId) {
+	while (!pendingReceivedMovements.empty() &&
+		pendingReceivedMovements.front().movementId <= lastAppliedMovementId) {
+		pendingReceivedMovements.erase(pendingReceivedMovements.begin());
+	}
+
+	const unsigned int maxDelayMovements = 4;
+
+	while (pendingReceivedMovements.size() > maxDelayMovements) {
+		lastAppliedMovementId = pendingReceivedMovements.front().movementId;
 		pendingReceivedMovements.erase(pendingReceivedMovements.begin());
 	}
 
@@ -42,10 +55,7 @@ void OnlinePlayer::Move() {
 		MovementReceive& target = pendingReceivedMovements.front();
 
 		float dx = target.position.x - transform->position.x;
-		float dy = target.position.y - transform->position.y;
-
 		float maxStepX = moveSpeed * TIME.GetDeltaTime();
-		float maxStepY = verticalFollowSpeed * TIME.GetDeltaTime();
 
 		if (std::abs(dx) <= maxStepX) {
 			transform->position.x = target.position.x;
@@ -54,15 +64,15 @@ void OnlinePlayer::Move() {
 			transform->position.x += (dx > 0.0f ? 1.0f : -1.0f) * maxStepX;
 		}
 
-		if (std::abs(dx) <= maxStepX) {
-			transform->position.x = target.position.x;
+		float dy = target.position.y - transform->position.y;
+		float maxStepY = 1200.0f * TIME.GetDeltaTime();
+
+		if (std::abs(dy) <= maxStepY) {
+			transform->position.y = target.position.y;
 		}
 		else {
-			transform->position.x += (dx > 0.0f ? 1.0f : -1.0f) * maxStepX;
+			transform->position.y += (dy > 0.0f ? 1.0f : -1.0f) * maxStepY;
 		}
-
-		float verticalLerpFactor = 0.6f;
-		transform->position.y = transform->position.y + (target.position.y - transform->position.y) * verticalLerpFactor;
 
 		float remainingDx = target.position.x - transform->position.x;
 		float remainingDy = target.position.y - transform->position.y;
