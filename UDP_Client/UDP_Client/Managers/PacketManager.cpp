@@ -259,7 +259,7 @@ void PacketManager::Matchmake(sf::Packet& data) {
 			udpConnected = true;												//al bindear el puerto en el mismo PC al usar varios clientes.
 		}
 		else {
-			std::cerr << "Failed to bind UDP socket to port " << UDP_SERVER_PORT << std::endl;
+			std::cerr << "Failed to bind UDP socket to port " << sf::Socket::AnyPort << std::endl;
 		}
 	}
 }
@@ -300,7 +300,6 @@ void PacketManager::HandleMovement(const char* buffer, std::size_t receivedSize,
 		unsigned int lastProcessedMovementID;
 		float x;
 		float y;
-
 
 		std::memcpy(&playerId, buffer + readPos, sizeof(playerId));
 		readPos += sizeof(playerId);
@@ -467,6 +466,9 @@ void PacketManager::SendMovement(float x, float y, unsigned int movementID) {
 
 	std::memcpy(buffer + bufferDataSize, &packetType, sizeof(packetType));
 	bufferDataSize += sizeof(packetType);
+
+	std::memcpy(buffer + bufferDataSize, &myIndex, sizeof(myIndex));
+	bufferDataSize += sizeof(myIndex);
 
 	std::memcpy(buffer + bufferDataSize, &movementType, sizeof(movementType));
 	bufferDataSize += sizeof(movementType);

@@ -45,7 +45,7 @@ void Lobby::OnEnter() {
 		});
 	rankingButton->GetTransform()->scale = Vector2(1.0f, 1.0f);
 	rankingButton->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f, RM->WINDOW_HEIGHT / 2.0f + 200);
-	rankingButton->GetBackground()->GetTransform()->scale = Vector2(1.0f, 1.0f);
+	rankingButton->GetBackground()->GetTransform()->scale = Vector2(0.5f, 0.5f);
 	rankingButton->GetBackground()->GetTransform()->position = rankingButton->GetTransform()->position;
 	SPAWN.SpawnObject(rankingButton->GetBackground());
 	SPAWN.SpawnObject(rankingButton);
