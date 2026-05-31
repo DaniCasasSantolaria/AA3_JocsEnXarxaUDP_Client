@@ -28,7 +28,11 @@ enum udpPacketType {
     REGISTER_CLIENT,
     SHOOT,
     HIT,
-    PING
+    PING,
+    PONG,
+    DISCONNECTED_PLAYER,
+    IRREGULARITY_WARNING,
+    MATCH_FINISHED
 };
 
 // Enum de resultados posibles en autenticación
@@ -78,12 +82,12 @@ sf::Packet& operator >>(sf::Packet& packet, matchmakeStatus& status);
 sf::Packet& operator >>(sf::Packet& packet, movementPacketType& status);
 
 // Gestor de paquetes de red
-// Responsable de manejar toda la comunicación TCP/IP del cliente
+// Responsable de manejar toda la comunicación TCP/UDP del cliente
 class PacketManager {
 private:
     // Constantes de configuración de red
     unsigned const short LISTENER_PORT = 55007; // Port
-    const sf::IpAddress SERVER_IP = sf::IpAddress(10, 8, 0, 3); // IP
+    const sf::IpAddress SERVER_IP = sf::IpAddress(10, 8, 0, 4); // IP
 
     // TCP Sockets de comunicación
     sf::TcpSocket socket;
@@ -99,9 +103,16 @@ private:
 
 
     // Estado de conexión
-    short myIndex = -1;
+    unsigned short myIndex = 0;
     unsigned short totalPlayers = 0;
     bool serverConnected = false;
+
+    //Ping Pong
+    float lastUdpPacketTime = 0.0f;
+    float lastPingTime = 0.0f;
+    bool waitingPong = false;
+    unsigned int lastPingId = 0;
+    sf::Clock udpClock;
 
     PacketManager() = default;
     PacketManager(PacketManager&) = delete;
@@ -142,7 +153,7 @@ public:
     short finalRanking[MAX_PLAYERS] = { -1, -1, -1, -1 };
     unsigned short finishedCount = 0;
     std::string allUsernames[MAX_PLAYERS];
-    std::vector<short> disconnectedPlayers;
+    std::vector<unsigned short> disconnectedPlayers;
 
     bool ConnectToServer();
     void DisconnectFromServer();
@@ -191,6 +202,16 @@ public:
         return !pendingLocalValidations.empty();
     }
     LocalValidation PopPendingLocalValidation();
+
+    //PING PONG
+    void SendPing();
+    void SendPong(unsigned int pingId);
+    void HandlePing(const char* buffer, std::size_t receivedSize, std::size_t readPos);
+    void HandlePong(const char* buffer, std::size_t receivedSize, std::size_t readPos);
+    void UpdatePingSystem();
+    void HandleDisconnectedPlayer(const char* buffer, std::size_t receivedSize, std::size_t readPos);
+    void HandleIrregularityWarning(const char* buffer, std::size_t receivedSize, std::size_t readPos);
+    void HandleMatchFinished(const char* buffer, std::size_t receivedSize, std::size_t readPos);
 
 private:
     //Movement

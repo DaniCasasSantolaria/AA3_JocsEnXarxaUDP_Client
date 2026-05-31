@@ -133,15 +133,41 @@ void PacketManager::Update() {
 			std::memcpy(&packetType, buffer + readPos, sizeof(packetType));
 			readPos += sizeof(packetType);
 
+			lastUdpPacketTime = udpClock.getElapsedTime().asSeconds();
+
 			switch (packetType) {
-			case udpPacketType::MOVEMENT:
+			case MOVEMENT:
 				HandleMovement(buffer, receivedSize, readPos);
+				break;
+
+			case PING:
+				HandlePing(buffer, receivedSize, readPos);
+				break;
+
+			case PONG:
+				HandlePong(buffer, receivedSize, readPos);
+				break;
+
+			case DISCONNECTED_PLAYER:
+				HandleDisconnectedPlayer(buffer, receivedSize, readPos);
+				break;
+
+			case IRREGULARITY_WARNING:
+				HandleIrregularityWarning(buffer, receivedSize, readPos);
+				break;
+
+			case MATCH_FINISHED:
+				HandleMatchFinished(buffer, receivedSize, readPos);
 				break;
 
 			default:
 				break;
 			}
 		}
+	}
+
+	if (udpConnected) {
+		UpdatePingSystem();
 	}
 }
 
@@ -254,9 +280,13 @@ void PacketManager::Matchmake(sf::Packet& data) {
 
 	if (matchStarted) {
 		SM.SetNextScene("Gameplay");
-		if(udpSocket.bind(sf::Socket::AnyPort) == sf::Socket::Status::Done) {	//Bindeamos el Puerto a cualquier puerto. Al enviar mensajes si que usaremos
+		if(udpSocket.bind(sf::Socket::AnyPort) == sf::Socket::Status::Done) {	//Hecho con IA. Bindeamos el Puerto a cualquier puerto. Al enviar mensajes si que usaremos
 			udpSocket.setBlocking(false);										//el UDP_SERVER_PORT, pero con esto hacemos que el cliente no tenga conflicto
 			udpConnected = true;												//al bindear el puerto en el mismo PC al usar varios clientes.
+			lastUdpPacketTime = udpClock.getElapsedTime().asSeconds();
+			lastPingTime = lastUdpPacketTime;
+			waitingPong = false;
+			lastPingId = 0;
 		}
 		else {
 			std::cerr << "Failed to bind UDP socket to port " << sf::Socket::AnyPort << std::endl;
@@ -315,11 +345,6 @@ void PacketManager::HandleMovement(const char* buffer, std::size_t receivedSize,
 
 		if (playerId == myIndex) {
 			// Validacion Local Player
-			/*std::cout << "My own ID: " << myIndex << std::endl;
-			std::cout << "Received validated movement for my player " << playerId << ": " << std::endl;
-			std::cout << "Position: (" << x << ", " << y << ")" << std::endl;
-			std::cout << "Last Processed Movement ID: " << lastProcessedMovementID << std::endl;*/
-
 			LocalValidation validation;
 			validation.movementId = lastProcessedMovementID;
 			validation.position = Vector2(x, y);
@@ -328,10 +353,6 @@ void PacketManager::HandleMovement(const char* buffer, std::size_t receivedSize,
 		}
 		else {
 			// Interpolacion Online Player
-			//std::cout << "Received validated movement for player " << playerId << ": " << std::endl;
-			//std::cout << "Position: (" << x << ", " << y << ")" << std::endl;
-			//std::cout << "Last Processed Movement ID: " << lastProcessedMovementID << std::endl;
-
 			OnlineMovement movement;
 			movement.movementId = lastProcessedMovementID;
 			movement.position = Vector2(x, y);
@@ -497,4 +518,182 @@ PacketManager::LocalValidation PacketManager::PopPendingLocalValidation() {
 	LocalValidation validation = pendingLocalValidations.front();
 	pendingLocalValidations.pop();
 	return validation;
+}
+
+void PacketManager::SendPing() {
+	char buffer[1024];
+	std::size_t size = 0;
+
+	udpPacketType packetType = PING;
+	unsigned short clientId = myIndex;
+	unsigned int pingId = lastPingId + 1;
+
+	std::memcpy(buffer + size, &packetType, sizeof(packetType));
+	size += sizeof(packetType);
+
+	std::memcpy(buffer + size, &clientId, sizeof(clientId));
+	size += sizeof(clientId);
+
+	std::memcpy(buffer + size, &pingId, sizeof(pingId));
+	size += sizeof(pingId);
+
+	if (udpSocket.send(buffer, size, UDP_SERVER_IP, UDP_SERVER_PORT) == sf::Socket::Status::Done) {
+		lastPingId = pingId;
+		lastPingTime = udpClock.getElapsedTime().asSeconds();
+		waitingPong = true;
+	}
+}
+
+void PacketManager::SendPong(unsigned int pingId) {
+	char buffer[1024];
+	std::size_t size = 0;
+
+	udpPacketType packetType = PONG;
+	unsigned short clientId = myIndex;
+
+	std::memcpy(buffer + size, &packetType, sizeof(packetType));
+	size += sizeof(packetType);
+
+	std::memcpy(buffer + size, &clientId, sizeof(clientId));
+	size += sizeof(clientId);
+
+	std::memcpy(buffer + size, &pingId, sizeof(pingId));
+	size += sizeof(pingId);
+
+	if(udpSocket.send(buffer, size, UDP_SERVER_IP, UDP_SERVER_PORT) != sf::Socket::Status::Done) {
+		std::cerr << "Failed to send pong data to server" << std::endl;
+	}
+}
+
+void PacketManager::HandlePing(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
+	unsigned short clientId = 0;
+	unsigned int pingId = 0;
+
+	std::memcpy(&clientId, buffer + readPos, sizeof(clientId));
+	readPos += sizeof(clientId);
+
+	std::memcpy(&pingId, buffer + readPos, sizeof(pingId));
+	readPos += sizeof(pingId);
+
+	if (clientId != myIndex)
+		return;
+
+	lastUdpPacketTime = udpClock.getElapsedTime().asSeconds();
+	waitingPong = false;
+
+	SendPong(pingId);
+}
+
+void PacketManager::HandlePong(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
+	unsigned short clientId = 0;
+	unsigned int pingId = 0;
+
+	std::memcpy(&clientId, buffer + readPos, sizeof(clientId));
+	readPos += sizeof(clientId);
+
+	std::memcpy(&pingId, buffer + readPos, sizeof(pingId));
+	readPos += sizeof(pingId);
+
+	if (clientId != myIndex || pingId != lastPingId)
+		return;
+
+	lastUdpPacketTime = udpClock.getElapsedTime().asSeconds();
+	waitingPong = false;
+}
+
+void PacketManager::UpdatePingSystem() {
+	const float PING_THRESHOLD = 1.0f;
+	const float PING_INTERVAL = 0.5f;
+	const float TIMEOUT = 3.0f;
+
+	float currentTime = udpClock.getElapsedTime().asSeconds();
+	float timeSinceLastPacket = currentTime - lastUdpPacketTime;
+
+	if (timeSinceLastPacket >= TIMEOUT) {
+		std::cout << "UDP server timeout" << std::endl;
+		udpConnected = false;
+		waitingPong = false;
+		udpSocket.unbind();
+		SM.SetNextScene("Lobby");
+		return;
+	}
+
+	if (timeSinceLastPacket >= PING_THRESHOLD) {
+		if (!waitingPong || currentTime - lastPingTime >= PING_INTERVAL) {
+			SendPing();
+		}
+	}
+}
+
+void PacketManager::HandleDisconnectedPlayer(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
+	unsigned short disconnectedClientId = 0;
+
+	std::memcpy(&disconnectedClientId, buffer + readPos, sizeof(disconnectedClientId));
+	readPos += sizeof(disconnectedClientId);
+
+	disconnectedPlayers.push_back(disconnectedClientId);
+
+	std::cout << "Player disconnected: " << disconnectedClientId << std::endl;
+
+	udpConnected = false;
+	waitingPong = false;
+	udpSocket.unbind();
+
+	SM.SetNextScene("Lobby");
+}
+
+void PacketManager::HandleIrregularityWarning(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
+	unsigned short clientId = 0;
+	unsigned int movementID = 0;
+	float validX = 0.0f;
+	float validY = 0.0f;
+	unsigned short irregularityCount = 0;
+
+	std::memcpy(&clientId, buffer + readPos, sizeof(clientId));
+	readPos += sizeof(clientId);
+
+	std::memcpy(&movementID, buffer + readPos, sizeof(movementID));
+	readPos += sizeof(movementID);
+
+	std::memcpy(&validX, buffer + readPos, sizeof(validX));
+	readPos += sizeof(validX);
+
+	std::memcpy(&validY, buffer + readPos, sizeof(validY));
+	readPos += sizeof(validY);
+
+	std::memcpy(&irregularityCount, buffer + readPos, sizeof(irregularityCount));
+	readPos += sizeof(irregularityCount);
+
+	if (clientId == myIndex) {
+		LocalValidation validation;
+		validation.movementId = movementID;
+		validation.position = Vector2(validX, validY);
+		pendingLocalValidations.push(validation);
+	}
+
+	std::cout << "Irregularidad detectada: " << irregularityCount << "/3" << std::endl;
+}
+
+void PacketManager::HandleMatchFinished(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
+	unsigned short loserClientId = 0;
+	unsigned short reason = 0;
+
+	std::memcpy(&loserClientId, buffer + readPos, sizeof(loserClientId));
+	readPos += sizeof(loserClientId);
+
+	std::memcpy(&reason, buffer + readPos, sizeof(reason));
+	readPos += sizeof(reason);
+
+	if (loserClientId == myIndex) {
+		std::cout << "Has perdido por irregularidades" << std::endl;
+	}
+	else {
+		std::cout << "Has ganado. El rival ha perdido por irregularidades" << std::endl;
+	}
+
+	udpConnected = false;
+	waitingPong = false;
+	udpSocket.unbind();
+
+	SM.SetNextScene("Lobby");
 }

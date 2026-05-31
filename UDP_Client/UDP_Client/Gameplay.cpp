@@ -25,12 +25,12 @@ void Gameplay::OnEnter() {
 
     localPlayer = new LocalPlayer("resources/Tilesets/knight.png", Vector2(0.0f, 0.0f), Vector2(32.0f, 32.0f), 0, 4, 0.1f, true, 1.0f, 3);
     localPlayer->GetTransform()->scale = Vector2(3.0f, 3.0f);
-    localPlayer->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f - 200.0f, RM->WINDOW_HEIGHT / 2.0f);
+    localPlayer->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f - 200.0f, RM->WINDOW_HEIGHT - 100.0f);
     SPAWN.SpawnObject(localPlayer);
 
 	onlinePlayer = new OnlinePlayer("resources/Tilesets/Enemyknight.png", Vector2(0.0f, 0.0f), Vector2(32.0f, 32.0f), 0, 4, 0.1f, true, 1.0f, 3);
 	onlinePlayer->GetTransform()->scale = Vector2(3.0f, 3.0f);
-    onlinePlayer->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f + 200.0f, RM->WINDOW_HEIGHT / 2.0f);
+    onlinePlayer->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f - 200.0f, RM->WINDOW_HEIGHT - 100.0f);
     SPAWN.SpawnObject(onlinePlayer);
 }
 

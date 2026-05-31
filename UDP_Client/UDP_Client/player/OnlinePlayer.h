@@ -15,9 +15,6 @@ private:
 
 	float animationMoveThreshold = 0.5f;
 
-	static Vector2 Lerp(const Vector2& a, const Vector2& b, float t);
-	static float DistanceSquared(const Vector2& a, const Vector2& b);
-
 	void UpdateAnimationFromMovement(const Vector2& oldPosition, const Vector2& newPosition);
 
 public:
