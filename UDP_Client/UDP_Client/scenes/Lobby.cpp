@@ -14,7 +14,7 @@ void Lobby::OnEnter() {
 	SPAWN.SpawnObject(background);
 
 	// Botón para crear sala
-	noCompetitiveButton = new Button("", sf::Color{ 18, 113, 230 }, Vector2(0.0f, 0.0f), Vector2(660.0f, 140.0f), "resources/Lobby/create-button.png");
+	noCompetitiveButton = new Button("", sf::Color{ 18, 113, 230 }, Vector2(0.0f, 0.0f), Vector2(660.0f, 140.0f), "resources/Lobby/non-competitive-button.png");
 	noCompetitiveButton->SetAction([this]() {
 		NoCompetitiveAction();
 		});
@@ -26,7 +26,7 @@ void Lobby::OnEnter() {
 	SPAWN.SpawnObject(noCompetitiveButton);
 
 	// Botón para unirse a sala
-	competitiveButton = new Button("", sf::Color{ 18, 113, 230 }, Vector2(0.0f, 0.0f), Vector2(660.0f, 140.0f), "resources/Lobby/join-button.png");
+	competitiveButton = new Button("", sf::Color{ 18, 113, 230 }, Vector2(0.0f, 0.0f), Vector2(660.0f, 140.0f), "resources/Lobby/competitive-button.png");
 	competitiveButton->SetAction([this]() {
 		CompetitiveAction();
 		});

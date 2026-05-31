@@ -47,13 +47,13 @@ void SpawnRankingScores(const std::vector<PlayerScore>& scores) {
 
 // Botón para volver al lobby
 void SpawnBack() {
-	Button* backButton = new Button("", sf::Color{ 18, 113, 230 }, Vector2(0.0f, 0.0f), Vector2(16.0f, 16.0f), "resources/Ranking/back-button.png");
+	Button* backButton = new Button("", sf::Color{ 18, 113, 230 }, Vector2(0.0f, 0.0f), Vector2(660.0f, 140.0f), "resources/Ranking/back-button.png");
 	backButton->SetAction([]() {
 		SM.SetNextScene("Lobby");
 		});
 	backButton->GetTransform()->scale = Vector2(1.0f, 1.0f);
 	backButton->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f, RM->WINDOW_HEIGHT / 2.0f + 300);
-	backButton->GetBackground()->GetTransform()->scale = Vector2(25.0f, 6.0f);
+	backButton->GetBackground()->GetTransform()->scale = Vector2(0.5f, 0.5f);
 	backButton->GetBackground()->GetTransform()->position = backButton->GetTransform()->position;
 	SPAWN.SpawnObject(backButton->GetBackground());
 	SPAWN.SpawnObject(backButton);
