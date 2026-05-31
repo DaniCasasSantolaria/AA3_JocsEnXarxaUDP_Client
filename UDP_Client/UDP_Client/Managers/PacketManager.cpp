@@ -636,20 +636,6 @@ void PacketManager::HandleDisconnectedPlayer(const char* buffer, std::size_t rec
 	std::cout << "Player disconnected: " << disconnectedClientId << std::endl;
 
 	udpConnected = false;
-	SM.SetNextScene("Lobby");
-}
-
-void PacketManager::HandleDisconnectedPlayer(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
-	unsigned short disconnectedClientId = 0;
-
-	std::memcpy(&disconnectedClientId, buffer + readPos, sizeof(disconnectedClientId));
-	readPos += sizeof(disconnectedClientId);
-
-	disconnectedPlayers.push_back(disconnectedClientId);
-
-	std::cout << "Player disconnected: " << disconnectedClientId << std::endl;
-
-	udpConnected = false;
 	waitingPong = false;
 	udpSocket.unbind();
 

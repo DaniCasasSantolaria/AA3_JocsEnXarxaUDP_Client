@@ -16,9 +16,7 @@ void LocalPlayer::ApplyMovementInput(float direction, bool jump, float dt) {
 
 	physics->SetVelocity(velocity);
 }
-
 void LocalPlayer::ApplyServerValidation(unsigned int movementId, const Vector2& serverPosition) {
-	// Ignorar validaciones antiguas
 	if (movementId <= lastValidatedMovementId) {
 		return;
 	}
@@ -36,23 +34,33 @@ void LocalPlayer::ApplyServerValidation(unsigned int movementId, const Vector2& 
 		}
 	}
 
-	// Borrar movimientos confirmados
 	while (!pendingSentMovements.empty() &&
 		pendingSentMovements.front().movementId <= movementId) {
 		pendingSentMovements.erase(pendingSentMovements.begin());
+	}
+
+	if (!foundPrediction) {
+		transform->position = serverPosition;
+		pendingSentMovements.clear();
+		physics->SetVelocity(Vector2(0.0f, 0.0f));
+		return;
 	}
 
 	Vector2 correction = serverPosition - predictedPosition;
 
 	float errorSquared = correction.x * correction.x + correction.y * correction.y;
 
-	float minCorrection = 1.0f;
-	float maxSnapError = 250.0f;
+	const float minCorrection = 1.0f;
+	const float snapError = 20.0f;
 
-	if (errorSquared > maxSnapError * maxSnapError) {
+	if (errorSquared > snapError * snapError) {
 		transform->position = serverPosition;
+		pendingSentMovements.clear();
+		physics->SetVelocity(Vector2(0.0f, 0.0f));
+		return;
 	}
-	else if (foundPrediction && errorSquared > minCorrection * minCorrection) {
+
+	if (errorSquared > minCorrection * minCorrection) {
 		transform->position = transform->position + correction;
 	}
 }
