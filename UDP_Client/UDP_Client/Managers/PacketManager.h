@@ -30,7 +30,9 @@ enum udpPacketType {
     HIT,
     PING,
     PONG,
-    DISCONNECTED_PLAYER
+    DISCONNECTED_PLAYER,
+    IRREGULARITY_WARNING,
+    MATCH_FINISHED
 };
 
 // Enum de resultados posibles en autenticación
@@ -151,7 +153,7 @@ public:
     short finalRanking[MAX_PLAYERS] = { -1, -1, -1, -1 };
     unsigned short finishedCount = 0;
     std::string allUsernames[MAX_PLAYERS];
-    std::vector<short> disconnectedPlayers;
+    std::vector<unsigned short> disconnectedPlayers;
 
     bool ConnectToServer();
     void DisconnectFromServer();
@@ -208,6 +210,8 @@ public:
     void HandlePong(const char* buffer, std::size_t receivedSize, std::size_t readPos);
     void UpdatePingSystem();
     void HandleDisconnectedPlayer(const char* buffer, std::size_t receivedSize, std::size_t readPos);
+    void HandleIrregularityWarning(const char* buffer, std::size_t receivedSize, std::size_t readPos);
+    void HandleMatchFinished(const char* buffer, std::size_t receivedSize, std::size_t readPos);
 
 private:
     //Movement

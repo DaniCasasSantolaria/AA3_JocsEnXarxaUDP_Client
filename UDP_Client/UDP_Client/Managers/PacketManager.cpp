@@ -139,6 +139,7 @@ void PacketManager::Update() {
 			case MOVEMENT:
 				HandleMovement(buffer, receivedSize, readPos);
 				break;
+
 			case PING:
 				HandlePing(buffer, receivedSize, readPos);
 				break;
@@ -150,6 +151,15 @@ void PacketManager::Update() {
 			case DISCONNECTED_PLAYER:
 				HandleDisconnectedPlayer(buffer, receivedSize, readPos);
 				break;
+
+			case IRREGULARITY_WARNING:
+				HandleIrregularityWarning(buffer, receivedSize, readPos);
+				break;
+
+			case MATCH_FINISHED:
+				HandleMatchFinished(buffer, receivedSize, readPos);
+				break;
+
 			default:
 				break;
 			}
@@ -626,5 +636,78 @@ void PacketManager::HandleDisconnectedPlayer(const char* buffer, std::size_t rec
 	std::cout << "Player disconnected: " << disconnectedClientId << std::endl;
 
 	udpConnected = false;
+	SM.SetNextScene("Lobby");
+}
+
+void PacketManager::HandleDisconnectedPlayer(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
+	unsigned short disconnectedClientId = 0;
+
+	std::memcpy(&disconnectedClientId, buffer + readPos, sizeof(disconnectedClientId));
+	readPos += sizeof(disconnectedClientId);
+
+	disconnectedPlayers.push_back(disconnectedClientId);
+
+	std::cout << "Player disconnected: " << disconnectedClientId << std::endl;
+
+	udpConnected = false;
+	waitingPong = false;
+	udpSocket.unbind();
+
+	SM.SetNextScene("Lobby");
+}
+
+void PacketManager::HandleIrregularityWarning(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
+	unsigned short clientId = 0;
+	unsigned int movementID = 0;
+	float validX = 0.0f;
+	float validY = 0.0f;
+	unsigned short irregularityCount = 0;
+
+	std::memcpy(&clientId, buffer + readPos, sizeof(clientId));
+	readPos += sizeof(clientId);
+
+	std::memcpy(&movementID, buffer + readPos, sizeof(movementID));
+	readPos += sizeof(movementID);
+
+	std::memcpy(&validX, buffer + readPos, sizeof(validX));
+	readPos += sizeof(validX);
+
+	std::memcpy(&validY, buffer + readPos, sizeof(validY));
+	readPos += sizeof(validY);
+
+	std::memcpy(&irregularityCount, buffer + readPos, sizeof(irregularityCount));
+	readPos += sizeof(irregularityCount);
+
+	if (clientId == myIndex) {
+		LocalValidation validation;
+		validation.movementId = movementID;
+		validation.position = Vector2(validX, validY);
+		pendingLocalValidations.push(validation);
+	}
+
+	std::cout << "Irregularidad detectada: " << irregularityCount << "/3" << std::endl;
+}
+
+void PacketManager::HandleMatchFinished(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
+	unsigned short loserClientId = 0;
+	unsigned short reason = 0;
+
+	std::memcpy(&loserClientId, buffer + readPos, sizeof(loserClientId));
+	readPos += sizeof(loserClientId);
+
+	std::memcpy(&reason, buffer + readPos, sizeof(reason));
+	readPos += sizeof(reason);
+
+	if (loserClientId == myIndex) {
+		std::cout << "Has perdido por irregularidades" << std::endl;
+	}
+	else {
+		std::cout << "Has ganado. El rival ha perdido por irregularidades" << std::endl;
+	}
+
+	udpConnected = false;
+	waitingPong = false;
+	udpSocket.unbind();
+
 	SM.SetNextScene("Lobby");
 }
