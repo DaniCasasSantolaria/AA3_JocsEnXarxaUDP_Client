@@ -32,7 +32,8 @@ enum udpPacketType {
     PONG,
     DISCONNECTED_PLAYER,
     IRREGULARITY_WARNING,
-    MATCH_FINISHED
+    MATCH_FINISHED,
+    PLAYER_DEFEATED
 };
 
 // Enum de resultados posibles en autenticación
@@ -61,6 +62,17 @@ enum movementPacketType {
     RECEIVE_VALIDATED_MOVEMENT
 };
 
+enum matchResult {
+    MATCH_RESULT_LOSE,
+    MATCH_RESULT_WIN
+};
+
+enum matchFinishReason {
+    FINISH_BY_LIVES,
+    FINISH_BY_DISCONNECT,
+    FINISH_BY_IRREGULARITY
+};
+
 // Información básica del jugador
 struct PlayerInfo {
     std::string username = "";
@@ -74,12 +86,14 @@ sf::Packet& operator <<(sf::Packet& packet, authResult result);
 sf::Packet& operator <<(sf::Packet& packet, matchMode mode);
 sf::Packet& operator <<(sf::Packet& packet, matchmakeStatus status);
 sf::Packet& operator <<(sf::Packet& packet, movementPacketType status);
+sf::Packet& operator <<(sf::Packet& packet, matchFinishReason reason);
 
 sf::Packet& operator >>(sf::Packet& packet, packetType& type);
 sf::Packet& operator >>(sf::Packet& packet, authResult& result);
 sf::Packet& operator >>(sf::Packet& packet, matchMode& mode);
 sf::Packet& operator >>(sf::Packet& packet, matchmakeStatus& status);
 sf::Packet& operator >>(sf::Packet& packet, movementPacketType& status);
+sf::Packet& operator >>(sf::Packet& packet, matchFinishReason& reason);
 
 // Gestor de paquetes de red
 // Responsable de manejar toda la comunicación TCP/UDP del cliente
@@ -87,7 +101,7 @@ class PacketManager {
 private:
     // Constantes de configuración de red
     unsigned const short LISTENER_PORT = 55007; // Port
-    const sf::IpAddress SERVER_IP = sf::IpAddress(10, 8, 0, 4); // IP
+    const sf::IpAddress SERVER_IP = sf::IpAddress(10, 8, 0, 3); // IP
 
     // TCP Sockets de comunicación
     sf::TcpSocket socket;
@@ -95,7 +109,7 @@ private:
     //UDP
     unsigned const short UDP_SERVER_PORT = 55008;
     unsigned const short UDP_CLIENT_PORT = 55009;
-    const sf::IpAddress UDP_SERVER_IP = sf::IpAddress(10, 8, 0, 2); // IP
+    const sf::IpAddress UDP_SERVER_IP = sf::IpAddress(10, 8, 0, 3); // IP
     sf::UdpSocket udpSocket;
     bool udpConnected = false;
     unsigned int urgentBitmask = 00000001;
@@ -104,8 +118,14 @@ private:
 
     // Estado de conexión
     unsigned short myIndex = 0;
+    short myMatchPlayerId = -1; // 0 o 1
     unsigned short totalPlayers = 0;
     bool serverConnected = false;
+
+    //Match Result
+    bool matchFinishedReceived = false;
+    matchResult lastMatchResult = MATCH_RESULT_LOSE;
+    matchFinishReason lastMatchFinishReason = FINISH_BY_LIVES;
 
     //Ping Pong
     float lastUdpPacketTime = 0.0f;
@@ -177,6 +197,7 @@ public:
 
     //MATCHMAKE
     void SendMatchmakeRequest(matchMode mode);
+    inline short GetMyMatchPlayerId() const { return myMatchPlayerId; }
 
 
     //MAP
@@ -202,6 +223,15 @@ public:
         return !pendingLocalValidations.empty();
     }
     LocalValidation PopPendingLocalValidation();
+
+	//WIN NOTIFICATION
+    void SendPlayerDefeated();
+
+	//Match Result
+    inline bool HasMatchFinished() const { return matchFinishedReceived; }
+    inline matchResult GetLastMatchResult() const { return lastMatchResult; }
+    inline matchFinishReason GetLastMatchFinishReason() const { return lastMatchFinishReason; }
+    inline void ClearMatchFinished() { matchFinishedReceived = false; }
 
     //PING PONG
     void SendPing();

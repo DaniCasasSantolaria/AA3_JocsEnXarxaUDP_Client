@@ -26,6 +26,10 @@ sf::Packet& operator<<(sf::Packet& packet, movementPacketType status) {
 	return packet << static_cast<short>(status);
 }
 
+sf::Packet& operator <<(sf::Packet& packet, matchFinishReason reason) {
+	return packet << static_cast<short>(reason);
+}
+
 sf::Packet& operator >>(sf::Packet& packet, packetType& type) {
 	short  temp;
 	packet >> temp;
@@ -58,6 +62,13 @@ sf::Packet& operator>>(sf::Packet& packet, movementPacketType& status) {
 	short  temp;
 	packet >> temp;
 	status = static_cast<movementPacketType>(temp);
+	return packet;
+}
+
+sf::Packet& operator >>(sf::Packet& packet, matchFinishReason& reason) {
+	short  temp;
+	packet >> temp;
+	reason = static_cast<matchFinishReason>(temp);
 	return packet;
 }
 
@@ -252,6 +263,7 @@ void PacketManager::Matchmake(sf::Packet& data) {
 	matchmakeStatus status;
 	data >> mode;
 	data >> status;
+	data >> myMatchPlayerId;
 	bool matchStarted = false;
 	switch (mode)
 	{
@@ -520,6 +532,31 @@ PacketManager::LocalValidation PacketManager::PopPendingLocalValidation() {
 	return validation;
 }
 
+void PacketManager::SendPlayerDefeated() {
+	if (!udpConnected) {
+		return;
+	}
+
+	char buffer[1024];
+	std::size_t size = 0;
+
+	udpPacketType packetType = PLAYER_DEFEATED;
+	unsigned short clientId = myIndex;
+
+	std::memcpy(buffer + size, &packetType, sizeof(packetType));
+	size += sizeof(packetType);
+
+	std::memcpy(buffer + size, &clientId, sizeof(clientId));
+	size += sizeof(clientId);
+
+	if (udpSocket.send(buffer, size, UDP_SERVER_IP, UDP_SERVER_PORT) != sf::Socket::Status::Done) {
+		std::cerr << "Failed to send PLAYER_DEFEATED packet" << std::endl;
+	}
+	else {
+		std::cout << "PLAYER_DEFEATED sent to server. ClientId: " << clientId << std::endl;
+	}
+}
+
 void PacketManager::SendPing() {
 	char buffer[1024];
 	std::size_t size = 0;
@@ -675,20 +712,27 @@ void PacketManager::HandleIrregularityWarning(const char* buffer, std::size_t re
 }
 
 void PacketManager::HandleMatchFinished(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
-	unsigned short loserClientId = 0;
-	unsigned short reason = 0;
+	unsigned short resultValue = 0;
+	unsigned short reasonValue = 0;
 
-	std::memcpy(&loserClientId, buffer + readPos, sizeof(loserClientId));
-	readPos += sizeof(loserClientId);
+	if (readPos + sizeof(resultValue) + sizeof(reasonValue) > receivedSize) {
+		return;
+	}
 
-	std::memcpy(&reason, buffer + readPos, sizeof(reason));
-	readPos += sizeof(reason);
+	std::memcpy(&resultValue, buffer + readPos, sizeof(resultValue));
+	readPos += sizeof(resultValue);
 
-	if (loserClientId == myIndex) {
-		std::cout << "Has perdido por irregularidades" << std::endl;
+	std::memcpy(&reasonValue, buffer + readPos, sizeof(reasonValue));
+	readPos += sizeof(reasonValue);
+
+	matchResult result = static_cast<matchResult>(resultValue);
+	matchFinishReason reason = static_cast<matchFinishReason>(reasonValue);
+
+	if (result == MATCH_RESULT_WIN) {
+		std::cout << "HAS GANADO" << std::endl;
 	}
 	else {
-		std::cout << "Has ganado. El rival ha perdido por irregularidades" << std::endl;
+		std::cout << "HAS PERDIDO" << std::endl;
 	}
 
 	udpConnected = false;

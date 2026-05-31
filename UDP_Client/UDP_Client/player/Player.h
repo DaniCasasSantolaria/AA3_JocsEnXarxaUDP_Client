@@ -54,7 +54,7 @@ public:
 	virtual void Update() = 0;
 
 	void OnCollisionEnter(Object* other) override;
-	inline void RecieveDamage(int amount) override {
+	inline void RecieveDamage(short amount) override {
 		life -= amount;
 		if (IsDead()) {
 			Destroy();

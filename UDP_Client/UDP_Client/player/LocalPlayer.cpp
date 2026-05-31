@@ -110,13 +110,27 @@ void LocalPlayer::Move() {
 }
 
 void LocalPlayer::Update() {
+	if (defeated) {
+		physics->SetVelocity(Vector2(0.0f, 0.0f));
+		ImageObject::Update();
+		return;
+	}
+
 	Move();
 	ImageObject::Update();
 	isGrounded = false;
 	Shoot();
+
+	if (Input.GetEvent(sf::Keyboard::Key::H, KeyState::DOWN)) {
+		LoseHealthPoint();
+	}
 }
 
 void LocalPlayer::TrySendMovement() {
+	if (defeated) {
+		return;
+	}
+
 	lastTimeSentMovement += TIME.GetDeltaTime();
 
 	if (lastTimeSentMovement >= timeToSendMovement) {
@@ -131,4 +145,70 @@ void LocalPlayer::TrySendMovement() {
 		currentMovementID++;
 		lastTimeSentMovement -= timeToSendMovement;
 	}
+}
+
+void LocalPlayer::LoseHealthPoint() {
+	RecieveDamage(1);
+}
+
+void LocalPlayer::RecieveDamage(short amount) {
+	if (defeated || amount <= 0) {
+		return;
+	}
+
+	std::cout << "Current HP: " << currentHealthPoints << "Current Lives: " << currentLives << std::endl;
+
+	currentHealthPoints -= static_cast<short>(amount);
+
+	ChangeAnimation(PlayerState::HIT);
+
+	if (currentHealthPoints > 0) {
+		return;
+	}
+
+	currentLives--;
+
+	if (currentLives > 0) {
+		Respawn();
+		return;
+	}
+
+	currentLives = 0;
+	currentHealthPoints = 0;
+	defeated = true;
+
+	physics->SetVelocity(Vector2(0.0f, 0.0f));
+	ChangeAnimation(PlayerState::DEATH);
+
+	if (!defeatSent) {
+		PM->SendPlayerDefeated();
+		defeatSent = true;
+	}
+}
+
+bool LocalPlayer::IsDead() {
+	return defeated;
+}
+
+void LocalPlayer::SetRespawnPosition(const Vector2& position) {
+	spawnPosition = position;
+}
+
+void LocalPlayer::Respawn() {
+	currentHealthPoints = maxHealthPoints;
+
+	transform->position = spawnPosition;
+	physics->SetVelocity(Vector2(0.0f, 0.0f));
+
+	isGrounded = false;
+
+	pendingSentMovements.clear();
+
+	if (currentMovementID > 0) {
+		lastValidatedMovementId = currentMovementID - 1;
+	}
+
+	lastTimeSentMovement = timeToSendMovement;
+
+	ChangeAnimation(PlayerState::IDLE);
 }

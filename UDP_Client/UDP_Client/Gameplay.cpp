@@ -23,14 +23,27 @@ void Gameplay::OnEnter() {
     TileMap tileMap;
     tileMap.LoadFromFile("resources/Maps/Map.txt");
 
+    Vector2 localSpawnPosition;
+    Vector2 rivalSpawnPosition;
+
+    if (PM->GetMyMatchPlayerId() == 0) {
+        localSpawnPosition = leftSpawnPosition;
+        rivalSpawnPosition = rightSpawnPosition;
+    }
+    else {
+        localSpawnPosition = rightSpawnPosition;
+        rivalSpawnPosition = leftSpawnPosition;
+    }
+
     localPlayer = new LocalPlayer("resources/Tilesets/knight.png", Vector2(0.0f, 0.0f), Vector2(32.0f, 32.0f), 0, 4, 0.1f, true, 1.0f, 3);
     localPlayer->GetTransform()->scale = Vector2(3.0f, 3.0f);
-    localPlayer->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f - 200.0f, RM->WINDOW_HEIGHT - 100.0f);
+    localPlayer->SetRespawnPosition(localSpawnPosition);
+    localPlayer->GetTransform()->position = localPlayer->GetRespawnPosition();
     SPAWN.SpawnObject(localPlayer);
 
 	onlinePlayer = new OnlinePlayer("resources/Tilesets/Enemyknight.png", Vector2(0.0f, 0.0f), Vector2(32.0f, 32.0f), 0, 4, 0.1f, true, 1.0f, 3);
 	onlinePlayer->GetTransform()->scale = Vector2(3.0f, 3.0f);
-    onlinePlayer->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f - 200.0f, RM->WINDOW_HEIGHT - 100.0f);
+    onlinePlayer->GetTransform()->position = rivalSpawnPosition;
     SPAWN.SpawnObject(onlinePlayer);
 }
 
@@ -96,6 +109,40 @@ void Gameplay::FinishGame()
 }
 
 void Gameplay::Update() {
+    if (!gameFinished && PM->HasMatchFinished()) {
+        gameFinished = true;
+        resultTimer = 0.0f;
+
+        std::string text = "";
+
+        if (PM->GetLastMatchResult() == MATCH_RESULT_WIN) {
+            text = "YOU WIN";
+        }
+        else {
+            text = "YOU LOSE";
+        }
+
+        resultText = new TextObject(text, sf::Color::White);
+        resultText->GetTransform()->position = Vector2( RM->WINDOW_WIDTH / 2.0f, RM->WINDOW_HEIGHT / 2.0f );
+        resultText->GetTransform()->scale = Vector2(3.0f, 3.0f);
+
+        SPAWN.SpawnObject(resultText);
+
+        PM->ClearMatchFinished();
+    }
+
+    if (gameFinished) {
+        Scene::Update();
+
+        resultTimer += TIME.GetDeltaTime();
+
+        if (resultTimer >= RESULT_TIME) {
+            SM.SetNextScene("Lobby");
+        }
+
+        return;
+    }
+
     if (onlinePlayer != nullptr) {
         while (PM->HasPendingOnlineMovement()) {
             PacketManager::OnlineMovement movement = PM->PopPendingOnlineMovement();
