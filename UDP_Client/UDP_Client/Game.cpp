@@ -54,6 +54,7 @@ void Game::Init() {
 	RM->LoadTexture("resources/Tilesets/platforms.png");
 
 	RM->LoadTexture("resources/Tilesets/knight.png");
+	RM->LoadTexture("resources/Tilesets/Enemyknight.png");
 	
 	//Backgrounds
 	RM->LoadTexture("resources/Login/Fondo.png");

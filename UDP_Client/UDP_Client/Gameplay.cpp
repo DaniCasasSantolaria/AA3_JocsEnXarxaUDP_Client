@@ -6,17 +6,12 @@
 #include "Managers/InputManager.h"
 #include "Managers/PacketManager.h"
 #include "Maps/TileMap.h"
-#include "player/Player.h"
+#include "player/LocalPlayer.h"
 
 #define GRID_WIDTH 1000.0f
 #define GRID_HEIGHT 800.0f
-#define GRID_OFFSET_X 500.0f
-#define GRID_OFFSET_Y 50.0f
 
 void Gameplay::OnEnter() {
-    //Pata obtener ID del jugador y el total de jugadores, para luego enviar la info a los demas
-    //PM->SendPlayerInfoToAll();
-
     gameFinished = false;
 
     Object* background = new ImageObject("resources/Gameplay/GameplayBackground.png", Vector2{ 0, 0 }, Vector2{ 1536, 1024 });
@@ -25,16 +20,18 @@ void Gameplay::OnEnter() {
     background->GetRigidbody()->ClearColliders();
     SPAWN.SpawnObject(background);
 
-    float width = GRID_WIDTH / MAX_COLS;
-    float height = GRID_HEIGHT / MAX_ROWS;
-
     TileMap tileMap;
-    tileMap.LoadFromFile("resources/Maps/1/Map1.txt");
+    tileMap.LoadFromFile("resources/Maps/Map.txt");
 
-    Player* player = new Player("resources/Tilesets/knight.png", Vector2(0.0f, 0.0f), Vector2(32.0f, 32.0f), 0, 4, 0.1f, true, 1.0f, 3);
-	player->GetTransform()->scale = Vector2(3.0f, 3.0f);
-    player->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f, RM->WINDOW_HEIGHT / 2.0f);
-    SPAWN.SpawnObject(player);
+    localPlayer = new LocalPlayer("resources/Tilesets/knight.png", Vector2(0.0f, 0.0f), Vector2(32.0f, 32.0f), 0, 4, 0.1f, true, 1.0f, 3);
+    localPlayer->GetTransform()->scale = Vector2(3.0f, 3.0f);
+    localPlayer->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f - 200.0f, RM->WINDOW_HEIGHT / 2.0f);
+    SPAWN.SpawnObject(localPlayer);
+
+	onlinePlayer = new OnlinePlayer("resources/Tilesets/Enemyknight.png", Vector2(0.0f, 0.0f), Vector2(32.0f, 32.0f), 0, 4, 0.1f, true, 1.0f, 3);
+	onlinePlayer->GetTransform()->scale = Vector2(3.0f, 3.0f);
+    onlinePlayer->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f + 200.0f, RM->WINDOW_HEIGHT / 2.0f);
+    SPAWN.SpawnObject(onlinePlayer);
 }
 
 void Gameplay::OnExit() {
@@ -99,35 +96,34 @@ void Gameplay::FinishGame()
 }
 
 void Gameplay::Update() {
+    if (onlinePlayer != nullptr) {
+        while (PM->HasPendingOnlineMovement()) {
+            PacketManager::OnlineMovement movement = PM->PopPendingOnlineMovement();
+
+            onlinePlayer->AddServerMovement(
+                movement.movementId,
+                movement.position
+            );
+        }
+    }
+
+    while (PM->HasPendingLocalValidation() && localPlayer != nullptr) {
+        PacketManager::LocalValidation validation = PM->PopPendingLocalValidation();
+
+        localPlayer->ApplyServerValidation(
+            validation.movementId,
+            validation.position
+        );
+    }
+
+
     Scene::Update();
+    
+    if (localPlayer != nullptr) {
+        localPlayer->TrySendMovement();
+    }
 
     if (gameFinished) return;
-
-    // Procesa las desconexiones de los jugadores
-    // Actualizando el turno si es necesario y finalizando el juego si quedan 1 o ningún jugador activo
-    //while (PM->HasPendingDisconnect()) {
-    //    short disconnectedID = PM->PopPendingDisconnect();
-    //    std::cout << "Player " << disconnectedID << " left the game" << std::endl;
-
-    //    if (currentPlayerIDTurn == disconnectedID) {
-    //        ChangeTurn();
-    //        currentMoveTime = 0.0f;
-    //    }
-
-    //    if (ShouldFinishGame()) {
-    //        FinishGame();
-    //        return;
-    //    }
-    //}
-
-    //if (CheckWinCondition(row, col)) {
-    //    std::cout << "Player " << playerID << " wins!" << std::endl;
-    //}
-
-    //if (ShouldFinishGame()) {
-    //    FinishGame();
-    //    return;
-    //}
 }
 
 void Gameplay::Render() {

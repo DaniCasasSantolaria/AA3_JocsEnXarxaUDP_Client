@@ -28,14 +28,13 @@ protected:
 	float gravity = 2980.0f;
 
 	PlayerState currentState = PlayerState::IDLE;
-	Vector2 currentDirection = Vector2(0, 0);
 public:
 	Player() = default;
-	Player(std::string texturepath, Vector2 sourceOffset, Vector2 sourceSize, int numRows, int numColumns, float frameTime, bool hasToLoop, float shootCooldown, int life)
-		: ImageObject(texturepath, sourceOffset, sourceSize, numRows, numColumns, frameTime, hasToLoop), Shooting(shootCooldown),
+	Player(std::string texturepath, Vector2 sourceOffset, Vector2 sourceSize, unsigned short numRows, unsigned short numColumns, 
+		float frameTime, bool hasToLoop, float shootCooldown, short life, bool hasCollision)
+		: ImageObject(texturepath, sourceOffset, sourceSize, numRows, numColumns, frameTime, hasToLoop, hasCollision), Shooting(shootCooldown),
 		maxLifes(life) { 
 		this->life = maxLifes;
-		this->GetRigidbody()->SetGravity(gravity);
 
 		AnimatedImageRenderer* animatedRenderer = dynamic_cast<AnimatedImageRenderer*>(renderer);
 
@@ -44,7 +43,7 @@ public:
 		}
 	}
 
-	void Move();
+	virtual void Move() = 0;
 
 	void ResolveSolidCollision(Object* other);
 
@@ -52,14 +51,7 @@ public:
 		//AUDIO->PlayClip("shoot", 0, 10);
 	}
 
-	inline void Update() override {
-		Move();
-		isGrounded = false;
-
-		ImageObject::Update();
-
-		Shoot();
-	}
+	virtual void Update() = 0;
 
 	void OnCollisionEnter(Object* other) override;
 	inline void RecieveDamage(int amount) override {

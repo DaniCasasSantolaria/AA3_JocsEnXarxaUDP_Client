@@ -20,7 +20,7 @@ void Login::OnEnter() {
 		});
 	usernameTextButton->GetTransform()->scale = Vector2(1.0f, 1.0f);
 	usernameTextButton->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f, RM->WINDOW_HEIGHT / 2.0f - 100.0f);
-	usernameTextButton->GetBackground()->GetTransform()->scale = Vector2(1.0f, 1.0f);
+	usernameTextButton->GetBackground()->GetTransform()->scale = Vector2(0.35f, 0.35f);
 	usernameTextButton->GetBackground()->GetTransform()->position = usernameTextButton->GetTransform()->position;
 	SPAWN.SpawnObject(usernameTextButton->GetBackground());
 	SPAWN.SpawnObject(usernameTextButton);
@@ -32,7 +32,7 @@ void Login::OnEnter() {
 		});
 	passwordTextButton->GetTransform()->scale = Vector2(1.0f, 1.0f);
 	passwordTextButton->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f, RM->WINDOW_HEIGHT / 2.0f);
-	passwordTextButton->GetBackground()->GetTransform()->scale = Vector2(1.0f, 1.0f);
+	passwordTextButton->GetBackground()->GetTransform()->scale = Vector2(0.35f, 0.35f);
 	passwordTextButton->GetBackground()->GetTransform()->position = passwordTextButton->GetTransform()->position;
 	SPAWN.SpawnObject(passwordTextButton->GetBackground());
 	SPAWN.SpawnObject(passwordTextButton);
@@ -45,7 +45,7 @@ void Login::OnEnter() {
 		});
 	loginButton->GetTransform()->scale = Vector2(1.0f, 1.0f);
 	loginButton->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f, RM->WINDOW_HEIGHT / 2.0f + 100);
-	loginButton->GetBackground()->GetTransform()->scale = Vector2(1.0f, 1.0f);
+	loginButton->GetBackground()->GetTransform()->scale = Vector2(0.65f, 0.65f);
 	loginButton->GetBackground()->GetTransform()->position = loginButton->GetTransform()->position;
 	SPAWN.SpawnObject(loginButton->GetBackground());
 	SPAWN.SpawnObject(loginButton);
@@ -58,7 +58,7 @@ void Login::OnEnter() {
 		});
 	registerButton->GetTransform()->scale = Vector2(1.0f, 1.0f);
 	registerButton->GetTransform()->position = Vector2(RM->WINDOW_WIDTH / 2.0f, RM->WINDOW_HEIGHT / 2.0f + 200);
-	registerButton->GetBackground()->GetTransform()->scale = Vector2(1.0f, 1.0f);
+	registerButton->GetBackground()->GetTransform()->scale = Vector2(0.65f, 0.65f);
 	registerButton->GetBackground()->GetTransform()->position = registerButton->GetTransform()->position;
 	SPAWN.SpawnObject(registerButton->GetBackground());
 	SPAWN.SpawnObject(registerButton);

@@ -2,6 +2,8 @@
 #include "Scene.h"
 #include "MenuElements/Button.h"
 #include "Gameplay/GridBox.h"
+#include "player/OnlinePlayer.h"
+#include "player/LocalPlayer.h"
 
 #define MAX_ROWS 6
 #define MAX_COLS 8
@@ -10,6 +12,8 @@
 class Gameplay : public Scene {
 private:
 	bool gameFinished = false;
+	OnlinePlayer* onlinePlayer = nullptr;
+	LocalPlayer* localPlayer = nullptr;
 
 	bool CheckWinCondition(short row, short col);
 
