@@ -26,6 +26,10 @@ sf::Packet& operator<<(sf::Packet& packet, movementPacketType status) {
 	return packet << static_cast<short>(status);
 }
 
+sf::Packet& operator <<(sf::Packet& packet, matchFinishReason reason) {
+	return packet << static_cast<short>(reason);
+}
+
 sf::Packet& operator >>(sf::Packet& packet, packetType& type) {
 	short  temp;
 	packet >> temp;
@@ -58,6 +62,13 @@ sf::Packet& operator>>(sf::Packet& packet, movementPacketType& status) {
 	short  temp;
 	packet >> temp;
 	status = static_cast<movementPacketType>(temp);
+	return packet;
+}
+
+sf::Packet& operator >>(sf::Packet& packet, matchFinishReason& reason) {
+	short  temp;
+	packet >> temp;
+	reason = static_cast<matchFinishReason>(temp);
 	return packet;
 }
 
@@ -142,6 +153,10 @@ void PacketManager::Update() {
 
 			case SHOOT:
 				HandleShoot(buffer, receivedSize, readPos);
+				break;
+
+			case PLAYER_HEALTH_UPDATE:
+				HandleEnemyHealthUpdate(buffer, receivedSize, readPos);
 				break;
 
 			case PING:
@@ -366,7 +381,26 @@ void PacketManager::HandleMovement(const char* buffer, std::size_t receivedSize,
 	}
 }
 
-// Env�a solicitud de login al servidor con usuario y contrase�a
+void PacketManager::HandleEnemyHealthUpdate(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
+	EnemyHealthUpdate update;
+
+	if (readPos + sizeof(update.playerId) + sizeof(update.lives) + sizeof(update.health) > receivedSize) {
+		return;
+	}
+
+	std::memcpy(&update.playerId, buffer + readPos, sizeof(update.playerId));
+	readPos += sizeof(update.playerId);
+
+	std::memcpy(&update.lives, buffer + readPos, sizeof(update.lives));
+	readPos += sizeof(update.lives);
+
+	std::memcpy(&update.health, buffer + readPos, sizeof(update.health));
+	readPos += sizeof(update.health);
+
+	pendingEnemyHealthUpdates.push(update);
+}
+
+// Envia solicitud de login al servidor con usuario y contrase�a
 void PacketManager::SendLoginRequest(const std::string& username, const std::string& password) {
 	sf::Packet packet;
 	packetType type = LOGIN;
@@ -522,6 +556,36 @@ PacketManager::LocalValidation PacketManager::PopPendingLocalValidation() {
 	LocalValidation validation = pendingLocalValidations.front();
 	pendingLocalValidations.pop();
 	return validation;
+}
+
+void PacketManager::SendLifeHealthUpdate(short lives, short health) {
+	char buffer[1024];
+	std::size_t size = 0;
+
+	udpPacketType packetType = PLAYER_HEALTH_UPDATE;
+	unsigned short clientId = myIndex;
+
+	std::memcpy(buffer + size, &packetType, sizeof(packetType));
+	size += sizeof(packetType);
+
+	std::memcpy(buffer + size, &clientId, sizeof(clientId));
+	size += sizeof(clientId);
+
+	std::memcpy(buffer + size, &lives, sizeof(lives));
+	size += sizeof(lives);
+
+	std::memcpy(buffer + size, &health, sizeof(health));
+	size += sizeof(health);
+
+	if (udpSocket.send(buffer, size, UDP_SERVER_IP, UDP_SERVER_PORT) != sf::Socket::Status::Done) {
+		std::cerr << "Failed to send PLAYER_HEALTH_UPDATE packet" << std::endl;
+	}
+}
+
+PacketManager::EnemyHealthUpdate PacketManager::PopPendingEnemyHealthUpdate() {
+	EnemyHealthUpdate update = pendingEnemyHealthUpdates.front();
+	pendingEnemyHealthUpdates.pop();
+	return update;
 }
 
 void PacketManager::SendPing() {
@@ -754,25 +818,41 @@ PacketManager::ShootData PacketManager::PopPendingShoot() {
 }
 
 void PacketManager::HandleMatchFinished(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
-	unsigned short loserClientId = 0;
-	unsigned short reason = 0;
+	unsigned short resultValue = 0;
+	unsigned short reasonValue = 0;
 
-	std::memcpy(&loserClientId, buffer + readPos, sizeof(loserClientId));
-	readPos += sizeof(loserClientId);
+	if (readPos + sizeof(resultValue) + sizeof(reasonValue) > receivedSize) {
+		return;
+	}
 
-	std::memcpy(&reason, buffer + readPos, sizeof(reason));
-	readPos += sizeof(reason);
+	std::memcpy(&resultValue, buffer + readPos, sizeof(resultValue));
+	readPos += sizeof(resultValue);
 
-	if (loserClientId == myIndex) {
-		std::cout << "Has perdido por irregularidades" << std::endl;
+	std::memcpy(&reasonValue, buffer + readPos, sizeof(reasonValue));
+	readPos += sizeof(reasonValue);
+
+	lastMatchResult = static_cast<matchResult>(resultValue);
+	lastMatchFinishReason = static_cast<matchFinishReason>(reasonValue);
+	matchFinishedReceived = true;
+
+	if (lastMatchResult == MATCH_RESULT_WIN) {
+		std::cout << "HAS GANADO" << std::endl;
 	}
 	else {
-		std::cout << "Has ganado. El rival ha perdido por irregularidades" << std::endl;
+		std::cout << "HAS PERDIDO" << std::endl;
+	}
+
+	if (lastMatchFinishReason == FINISH_BY_LIVES) {
+		std::cout << "Motivo: FINISH_BY_LIVES" << std::endl;
+	}
+	else if (lastMatchFinishReason == FINISH_BY_DISCONNECT) {
+		std::cout << "Motivo: FINISH_BY_DISCONNECT" << std::endl;
+	}
+	else if (lastMatchFinishReason == FINISH_BY_IRREGULARITY) {
+		std::cout << "Motivo: FINISH_BY_IRREGULARITY" << std::endl;
 	}
 
 	udpConnected = false;
 	waitingPong = false;
 	udpSocket.unbind();
-
-	SM.SetNextScene("Lobby");
 }

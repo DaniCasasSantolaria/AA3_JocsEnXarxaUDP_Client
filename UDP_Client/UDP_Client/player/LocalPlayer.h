@@ -17,6 +17,15 @@ private:
 
 	std::vector<SentMovement> pendingSentMovements;
 
+	const short maxLives = 3;
+	const short maxHealthPoints = 5;
+
+	short currentLives = 3;
+	short currentHealthPoints = 5;
+
+	bool defeated = false;
+	bool defeatSent = false;
+
 public:
 	LocalPlayer() = default;
 	LocalPlayer(std::string texturepath, Vector2 sourceOffset, Vector2 sourceSize, unsigned short numRows, unsigned short numColumns, 
@@ -32,4 +41,16 @@ public:
 	void Update() override;
 	void TrySendMovement();
 	void Shoot() override;
+
+	void LoseHealthPoint();
+
+	void RecieveDamage(short amount) override;
+
+	bool IsDead() override;
+
+	inline short GetCurrentLives() const { return currentLives; }
+	inline short GetCurrentHealthPoints() const { return currentHealthPoints; }
+	inline short GetMaxLives() const { return maxLives; }
+	inline short GetMaxHealthPoints() const { return maxHealthPoints; }
+	inline bool HasLostMatch() const { return defeated; }
 };

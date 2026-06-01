@@ -32,6 +32,7 @@ enum udpPacketType {
     PONG,
     DISCONNECTED_PLAYER,
     IRREGULARITY_WARNING,
+    PLAYER_HEALTH_UPDATE,
     MATCH_FINISHED
 };
 
@@ -61,7 +62,18 @@ enum movementPacketType {
     RECEIVE_VALIDATED_MOVEMENT
 };
 
-// Informaci�n b�sica del jugador
+enum matchResult {
+    MATCH_RESULT_LOSE,
+    MATCH_RESULT_WIN
+};
+
+enum matchFinishReason {
+    FINISH_BY_LIVES,
+    FINISH_BY_DISCONNECT,
+    FINISH_BY_IRREGULARITY
+};
+
+// Informacion basica del jugador
 struct PlayerInfo {
     std::string username = "";
     int score = 0;
@@ -74,12 +86,14 @@ sf::Packet& operator <<(sf::Packet& packet, authResult result);
 sf::Packet& operator <<(sf::Packet& packet, matchMode mode);
 sf::Packet& operator <<(sf::Packet& packet, matchmakeStatus status);
 sf::Packet& operator <<(sf::Packet& packet, movementPacketType status);
+sf::Packet& operator <<(sf::Packet& packet, matchFinishReason reason);
 
 sf::Packet& operator >>(sf::Packet& packet, packetType& type);
 sf::Packet& operator >>(sf::Packet& packet, authResult& result);
 sf::Packet& operator >>(sf::Packet& packet, matchMode& mode);
 sf::Packet& operator >>(sf::Packet& packet, matchmakeStatus& status);
 sf::Packet& operator >>(sf::Packet& packet, movementPacketType& status);
+sf::Packet& operator >>(sf::Packet& packet, matchFinishReason& reason);
 
 // Gestor de paquetes de red
 // Responsable de manejar toda la comunicaci�n TCP/UDP del cliente
@@ -102,10 +116,14 @@ private:
 	unsigned int criticBitmask = 00000010;
 
 
-    // Estado de conexi�n
+    // Estado de conexion
     unsigned short myIndex = 0;
     unsigned short totalPlayers = 0;
     bool serverConnected = false;
+
+    bool matchFinishedReceived = false;
+    matchResult lastMatchResult = MATCH_RESULT_LOSE;
+    matchFinishReason lastMatchFinishReason = FINISH_BY_LIVES;
 
     //Ping Pong
     float lastUdpPacketTime = 0.0f;
@@ -146,6 +164,13 @@ public:
         Vector2 position = Vector2(0.0f, 0.0f);
     };
 
+    // Para actualizar vida y salud del enemigo
+    struct EnemyHealthUpdate {
+        unsigned short playerId = 0;
+        short lives = 0;
+        short health = 0;
+    };
+
     // Variables p�blicas del juego
     std::vector<PlayerScore> ranking = std::vector<PlayerScore>();
     std::string myUsername;
@@ -170,6 +195,7 @@ public:
 	void Matchmake(sf::Packet& data);
     void HandleMapRequest(sf::Packet& packet);
     void HandleMovement(const char* buffer, std::size_t receivedSize, std::size_t readPos);
+    void HandleEnemyHealthUpdate(const char* buffer, std::size_t receivedSize, std::size_t readPos);
 
 
 	//LOGIN Y REGISTER
@@ -219,6 +245,15 @@ public:
     }
     LocalValidation PopPendingLocalValidation();
 
+    //LIFE AND HEALTH UPDATE
+    void SendLifeHealthUpdate(short lives, short health);
+
+    inline bool HasPendingEnemyHealthUpdate() const {
+        return !pendingEnemyHealthUpdates.empty();
+    }
+
+    EnemyHealthUpdate PopPendingEnemyHealthUpdate();
+
     //PING PONG
     void SendPing();
     void SendPong(unsigned int pingId);
@@ -229,10 +264,19 @@ public:
     void HandleIrregularityWarning(const char* buffer, std::size_t receivedSize, std::size_t readPos);
     void HandleMatchFinished(const char* buffer, std::size_t receivedSize, std::size_t readPos);
 
+    //MATCH RESULT
+    inline bool HasMatchFinished() const { return matchFinishedReceived; }
+    inline matchResult GetLastMatchResult() const { return lastMatchResult; }
+    inline matchFinishReason GetLastMatchFinishReason() const { return lastMatchFinishReason; }
+    inline void ClearMatchFinished() { matchFinishedReceived = false; }
+
 private:
     //Movement
     std::queue<OnlineMovement> pendingOnlineMovements;
     std::queue<LocalValidation> pendingLocalValidations;
+
+    //Enemy Health Update
+    std::queue<EnemyHealthUpdate> pendingEnemyHealthUpdates;
 
     //Shoot
     std::queue<ShootData> pendingShoots;
