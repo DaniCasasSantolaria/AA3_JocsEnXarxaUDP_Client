@@ -60,7 +60,7 @@ void Game::Init() {
 	RM->LoadTexture("resources/Login/Fondo.png");
 	
 	//VFX
-	//RM->LoadTexture("resources/bullets/bullet_1.png");
+	RM->LoadTexture("resources/bullet.png");
 
 	//AUDIO
 	

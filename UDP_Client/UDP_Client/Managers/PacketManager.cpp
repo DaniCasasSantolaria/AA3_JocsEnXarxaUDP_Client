@@ -61,7 +61,7 @@ sf::Packet& operator>>(sf::Packet& packet, movementPacketType& status) {
 	return packet;
 }
 
-// Establece conexión TCP con el servidor central, desconecta primero si ya hay una conexión activa
+// Establece conexiï¿½n TCP con el servidor central, desconecta primero si ya hay una conexiï¿½n activa
 bool PacketManager::ConnectToServer() {
 	if (serverConnected) {
 		DisconnectFromServer();
@@ -77,7 +77,7 @@ bool PacketManager::ConnectToServer() {
 	return true;
 }
 
-// Cierra la conexión con el servidor, reinicia el socket y actualiza el estado de conexión
+// Cierra la conexiï¿½n con el servidor, reinicia el socket y actualiza el estado de conexiï¿½n
 void PacketManager::DisconnectFromServer() {
 	if (serverConnected) {
 		socket.disconnect();
@@ -140,6 +140,10 @@ void PacketManager::Update() {
 				HandleMovement(buffer, receivedSize, readPos);
 				break;
 
+			case SHOOT:
+				HandleShoot(buffer, receivedSize, readPos);
+				break;
+
 			case PING:
 				HandlePing(buffer, receivedSize, readPos);
 				break;
@@ -186,7 +190,7 @@ void PacketManager::HandShake(sf::Packet& data) {
 	std::cout << "Message from server: " << reciveMessage << std::endl;
 }
 
-// Respuesta de login del servidor, extrae credenciales, resultado de autenticación y puntuación
+// Respuesta de login del servidor, extrae credenciales, resultado de autenticaciï¿½n y puntuaciï¿½n
 void PacketManager::Login(sf::Packet& data) {
 	std::string user;
 	std::string pass;
@@ -224,7 +228,7 @@ void PacketManager::Login(sf::Packet& data) {
 	}
 }
 
-// Respuesta de registro del servidor, extrae credenciales y resultado de autenticación
+// Respuesta de registro del servidor, extrae credenciales y resultado de autenticaciï¿½n
 void PacketManager::Register(sf::Packet& data) {
 	std::string user;
 	std::string pass;
@@ -362,7 +366,7 @@ void PacketManager::HandleMovement(const char* buffer, std::size_t receivedSize,
 	}
 }
 
-// Envía solicitud de login al servidor con usuario y contraseña
+// Envï¿½a solicitud de login al servidor con usuario y contraseï¿½a
 void PacketManager::SendLoginRequest(const std::string& username, const std::string& password) {
 	sf::Packet packet;
 	packetType type = LOGIN;
@@ -375,7 +379,7 @@ void PacketManager::SendLoginRequest(const std::string& username, const std::str
 	}
 }
 
-// Envía solicitud de registro al servidor con usuario y contraseña
+// Envï¿½a solicitud de registro al servidor con usuario y contraseï¿½a
 void PacketManager::SendRegisterRequest(const std::string& username, const std::string& password) {
 	sf::Packet packet;
 	packetType type = REGISTER;
@@ -451,7 +455,7 @@ void PacketManager::SaveLocalMapVersion(unsigned short version) {
 	file << version;
 }
 
-// Procesa datos de ranking recibidos del servidor, extrae nombre, puntuación y posición de cada jugador y lo alamcena
+// Procesa datos de ranking recibidos del servidor, extrae nombre, puntuaciï¿½n y posiciï¿½n de cada jugador y lo alamcena
 void PacketManager::GetRanking(sf::Packet& data)
 {
 	ranking.clear();
@@ -464,7 +468,7 @@ void PacketManager::GetRanking(sf::Packet& data)
 	}
 }
 
-// Envía solicitud de ranking al servidor con el nombre del usuario actual
+// Envï¿½a solicitud de ranking al servidor con el nombre del usuario actual
 void PacketManager::RankingRequest() {
 	sf::Packet packet;
 	packetType type = RANKING;
@@ -672,6 +676,81 @@ void PacketManager::HandleIrregularityWarning(const char* buffer, std::size_t re
 	}
 
 	std::cout << "Irregularidad detectada: " << irregularityCount << "/3" << std::endl;
+}
+
+void PacketManager::SendShoot(float spawnX, float spawnY, float directionX, float directionY) {
+	char buffer[1024];
+	std::size_t size = 0;
+
+	udpPacketType packetType = SHOOT;
+	std::memcpy(buffer + size, &packetType, sizeof(packetType));
+	size += sizeof(packetType);
+
+	std::memcpy(buffer + size, &myIndex, sizeof(myIndex));
+	size += sizeof(myIndex);
+
+	std::memcpy(buffer + size, &urgentBitmask, sizeof(urgentBitmask));
+	size += sizeof(urgentBitmask);
+
+	std::memcpy(buffer + size, &directionX, sizeof(directionX));
+	size += sizeof(directionX);
+
+	std::memcpy(buffer + size, &directionY, sizeof(directionY));
+	size += sizeof(directionY);
+
+	std::memcpy(buffer + size, &spawnX, sizeof(spawnX));
+	size += sizeof(spawnX);
+
+	std::memcpy(buffer + size, &spawnY, sizeof(spawnY));
+	size += sizeof(spawnY);
+
+	if (udpSocket.send(buffer, size, UDP_SERVER_IP, UDP_SERVER_PORT) != sf::Socket::Status::Done) {
+		std::cerr << "Failed to send shoot packet" << std::endl;
+	}
+}
+
+void PacketManager::HandleShoot(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
+	unsigned short shooterNetworkId = 0;
+	unsigned int receivedUrgentBitmask = 0;
+	float directionX = 0.0f;
+	float directionY = 0.0f;
+	float spawnX = 0.0f;
+	float spawnY = 0.0f;
+
+	std::memcpy(&shooterNetworkId, buffer + readPos, sizeof(shooterNetworkId));
+	readPos += sizeof(shooterNetworkId);
+
+	std::memcpy(&receivedUrgentBitmask, buffer + readPos, sizeof(receivedUrgentBitmask));
+	readPos += sizeof(receivedUrgentBitmask);
+
+	std::memcpy(&directionX, buffer + readPos, sizeof(directionX));
+	readPos += sizeof(directionX);
+
+	std::memcpy(&directionY, buffer + readPos, sizeof(directionY));
+	readPos += sizeof(directionY);
+
+	std::memcpy(&spawnX, buffer + readPos, sizeof(spawnX));
+	readPos += sizeof(spawnX);
+
+	std::memcpy(&spawnY, buffer + readPos, sizeof(spawnY));
+	readPos += sizeof(spawnY);
+
+	if (shooterNetworkId == myIndex) return;
+
+	ShootData shootData;
+	shootData.shooterNetworkId = shooterNetworkId;
+	shootData.directionX = directionX;
+	shootData.directionY = directionY;
+	shootData.spawnX = spawnX;
+	shootData.spawnY = spawnY;
+
+	pendingShoots.push(shootData);
+}
+
+PacketManager::ShootData PacketManager::PopPendingShoot() {
+	ShootData shootData = pendingShoots.front();
+	pendingShoots.pop();
+	return shootData;
 }
 
 void PacketManager::HandleMatchFinished(const char* buffer, std::size_t receivedSize, std::size_t readPos) {

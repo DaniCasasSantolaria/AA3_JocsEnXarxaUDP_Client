@@ -7,6 +7,7 @@
 #include "Managers/PacketManager.h"
 #include "Maps/TileMap.h"
 #include "player/LocalPlayer.h"
+#include "Elements/Bullet.h"
 
 #define GRID_WIDTH 1000.0f
 #define GRID_HEIGHT 800.0f
@@ -117,8 +118,22 @@ void Gameplay::Update() {
     }
 
 
+    while (PM->HasPendingShoot()) {
+        PacketManager::ShootData shootData = PM->PopPendingShoot();
+
+        Bullet* bullet = new Bullet(
+            "resources/bullet.png",
+            Vector2(0.0f, 0.0f), Vector2(16.0f, 16.0f),
+            Vector2(shootData.directionX, shootData.directionY),
+            shootData.shooterNetworkId,
+            600.0f
+        );
+        bullet->GetTransform()->position = Vector2(shootData.spawnX, shootData.spawnY);
+        SPAWN.SpawnObject(bullet);
+    }
+
     Scene::Update();
-    
+
     if (localPlayer != nullptr) {
         localPlayer->TrySendMovement();
     }

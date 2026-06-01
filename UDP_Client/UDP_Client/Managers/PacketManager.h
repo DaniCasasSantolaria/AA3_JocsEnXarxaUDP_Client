@@ -35,7 +35,7 @@ enum udpPacketType {
     MATCH_FINISHED
 };
 
-// Enum de resultados posibles en autenticación
+// Enum de resultados posibles en autenticaciï¿½n
 enum authResult { 
     LOGIN_OK, 
     USER_NOT_FOUND,
@@ -61,7 +61,7 @@ enum movementPacketType {
     RECEIVE_VALIDATED_MOVEMENT
 };
 
-// Información básica del jugador
+// Informaciï¿½n bï¿½sica del jugador
 struct PlayerInfo {
     std::string username = "";
     int score = 0;
@@ -82,14 +82,14 @@ sf::Packet& operator >>(sf::Packet& packet, matchmakeStatus& status);
 sf::Packet& operator >>(sf::Packet& packet, movementPacketType& status);
 
 // Gestor de paquetes de red
-// Responsable de manejar toda la comunicación TCP/UDP del cliente
+// Responsable de manejar toda la comunicaciï¿½n TCP/UDP del cliente
 class PacketManager {
 private:
-    // Constantes de configuración de red
+    // Constantes de configuraciï¿½n de red
     unsigned const short LISTENER_PORT = 55007; // Port
     const sf::IpAddress SERVER_IP = sf::IpAddress(10, 8, 0, 4); // IP
 
-    // TCP Sockets de comunicación
+    // TCP Sockets de comunicaciï¿½n
     sf::TcpSocket socket;
 
     //UDP
@@ -102,7 +102,7 @@ private:
 	unsigned int criticBitmask = 00000010;
 
 
-    // Estado de conexión
+    // Estado de conexiï¿½n
     unsigned short myIndex = 0;
     unsigned short totalPlayers = 0;
     bool serverConnected = false;
@@ -128,7 +128,7 @@ public:
     // Flag para ocultar botones en la sala
     bool hideAllButtons = false;
 
-    // Struct para almacenar información de ranking
+    // Struct para almacenar informaciï¿½n de ranking
     struct PlayerScore {
         std::string name;
         int score;
@@ -146,7 +146,7 @@ public:
         Vector2 position = Vector2(0.0f, 0.0f);
     };
 
-    // Variables públicas del juego
+    // Variables pï¿½blicas del juego
     std::vector<PlayerScore> ranking = std::vector<PlayerScore>();
     std::string myUsername;
     PlayerInfo playerInfo;
@@ -154,6 +154,8 @@ public:
     unsigned short finishedCount = 0;
     std::string allUsernames[MAX_PLAYERS];
     std::vector<unsigned short> disconnectedPlayers;
+
+    inline unsigned short GetMyIndex() const { return myIndex; }
 
     bool ConnectToServer();
     void DisconnectFromServer();
@@ -191,6 +193,20 @@ public:
     void RankingRequest();
 
 
+    //SHOOT
+    struct ShootData {
+        unsigned short shooterNetworkId = 0;
+        float directionX = 0.0f;
+        float directionY = 0.0f;
+        float spawnX = 0.0f;
+        float spawnY = 0.0f;
+    };
+
+    void SendShoot(float spawnX, float spawnY, float directionX, float directionY);
+    void HandleShoot(const char* buffer, std::size_t receivedSize, std::size_t readPos);
+    inline bool HasPendingShoot() const { return !pendingShoots.empty(); }
+    ShootData PopPendingShoot();
+
     //MOVEMENT
 	void SendMovement(float x, float y, unsigned int movementID);
     inline bool HasPendingOnlineMovement() const {
@@ -217,4 +233,7 @@ private:
     //Movement
     std::queue<OnlineMovement> pendingOnlineMovements;
     std::queue<LocalValidation> pendingLocalValidations;
+
+    //Shoot
+    std::queue<ShootData> pendingShoots;
 };

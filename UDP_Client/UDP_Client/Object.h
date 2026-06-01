@@ -34,6 +34,7 @@ public:
 		isPendingDestroy = true;
 	}
 	virtual void OnCollisionEnter(Object* other) {}
+	virtual bool IsPlayer() const { return false; }
 
 	inline ~Object() {
 		delete transform;

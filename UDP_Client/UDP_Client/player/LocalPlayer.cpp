@@ -1,8 +1,10 @@
 #include "LocalPlayer.h"
 #include "../Managers/InputManager.h"
+#include "../Managers/PacketManager.h"
+#include "../Spawner.h"
+#include "../Elements/Bullet.h"
 #include <SFML/Window/Keyboard.hpp>
 #include <cmath>
-#include "../Managers/PacketManager.h"
 
 void LocalPlayer::ApplyMovementInput(float direction, bool jump, float dt) {
 	Vector2 velocity = physics->GetVelocity();
@@ -107,6 +109,34 @@ void LocalPlayer::Move() {
 	else {
 		ChangeAnimation(PlayerState::IDLE);
 	}
+}
+
+void LocalPlayer::Shoot() {
+	if (!Input.GetEvent(sf::Keyboard::Key::P, KeyState::DOWN)) return;
+
+	float currentTime = TIME.GetElapsedTime();
+	if (currentTime - lastTimeShooted < shootCooldown) return;
+	lastTimeShooted = currentTime;
+
+	Vector2 bulletDirection = lookingRight ? Vector2(1.0f, 0.0f) : Vector2(-1.0f, 0.0f);
+
+	float spawnOffsetX = (transform->size.x * std::abs(transform->scale.x)) / 2.0f;
+	Vector2 spawnPosition = Vector2(
+		transform->position.x + bulletDirection.x * spawnOffsetX,
+		transform->position.y
+	);
+
+	Bullet* bullet = new Bullet(
+		"resources/bullet.png",
+		Vector2(0.0f, 0.0f), Vector2(16.0f, 16.0f),
+		bulletDirection,
+		PM->GetMyIndex(),
+		600.0f
+	);
+	bullet->GetTransform()->position = spawnPosition;
+	SPAWN.SpawnObject(bullet);
+
+	PM->SendShoot(spawnPosition.x, spawnPosition.y, bulletDirection.x, bulletDirection.y);
 }
 
 void LocalPlayer::Update() {
