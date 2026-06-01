@@ -120,10 +120,6 @@ void LocalPlayer::Update() {
 	ImageObject::Update();
 	isGrounded = false;
 	Shoot();
-
-	if (Input.GetEvent(sf::Keyboard::Key::H, KeyState::DOWN)) {
-		LoseHealthPoint();
-	}
 }
 
 void LocalPlayer::TrySendMovement() {
@@ -156,13 +152,12 @@ void LocalPlayer::RecieveDamage(short amount) {
 		return;
 	}
 
-	std::cout << "Current HP: " << currentHealthPoints << "Current Lives: " << currentLives << std::endl;
-
-	currentHealthPoints -= static_cast<short>(amount);
+	currentHealthPoints -= amount;
 
 	ChangeAnimation(PlayerState::HIT);
 
 	if (currentHealthPoints > 0) {
+		PM->SendLifeHealthUpdate(currentLives, currentHealthPoints);
 		return;
 	}
 
@@ -170,6 +165,8 @@ void LocalPlayer::RecieveDamage(short amount) {
 
 	if (currentLives > 0) {
 		currentHealthPoints = maxHealthPoints;
+
+		PM->SendLifeHealthUpdate(currentLives, currentHealthPoints);
 
 		isGrounded = false;
 
@@ -189,13 +186,10 @@ void LocalPlayer::RecieveDamage(short amount) {
 	currentHealthPoints = 0;
 	defeated = true;
 
+	PM->SendLifeHealthUpdate(currentLives, currentHealthPoints);
+
 	physics->SetVelocity(Vector2(0.0f, 0.0f));
 	ChangeAnimation(PlayerState::DEATH);
-
-	if (!defeatSent) {
-		PM->SendPlayerDefeated();
-		defeatSent = true;
-	}
 }
 
 bool LocalPlayer::IsDead() {

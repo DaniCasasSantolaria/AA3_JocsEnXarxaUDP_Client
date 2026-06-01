@@ -96,11 +96,19 @@ void Gameplay::FinishGame()
 }
 
 void Gameplay::Update() {
+
+    if (Input.GetEvent(sf::Keyboard::Key::H, KeyState::DOWN)) {
+        localPlayer->LoseHealthPoint();
+
+        std::cout << "Current HP: " << localPlayer->GetCurrentHealthPoints() << " Current Lives: " << localPlayer->GetCurrentLives() << std::endl
+            << "Enemy HP: " << onlinePlayer->GetCurrentHealthPoints() << " Enemy Lives: " << onlinePlayer->GetCurrentLives() << std::endl;
+    }
+
     if (!gameFinished && PM->HasMatchFinished()) {
         gameFinished = true;
         resultTimer = 0.0f;
 
-        std::string text = "";
+        std::string text;
 
         if (PM->GetLastMatchResult() == MATCH_RESULT_WIN) {
             text = "YOU WIN";
@@ -110,7 +118,10 @@ void Gameplay::Update() {
         }
 
         resultText = new TextObject(text, sf::Color::White);
-        resultText->GetTransform()->position = Vector2( RM->WINDOW_WIDTH / 2.0f, RM->WINDOW_HEIGHT / 2.0f );
+        resultText->GetTransform()->position = Vector2(
+            RM->WINDOW_WIDTH / 2.0f,
+            RM->WINDOW_HEIGHT / 2.0f
+        );
         resultText->GetTransform()->scale = Vector2(3.0f, 3.0f);
 
         SPAWN.SpawnObject(resultText);
@@ -138,6 +149,16 @@ void Gameplay::Update() {
                 movement.movementId,
                 movement.position
             );
+        }
+
+        while (PM->HasPendingEnemyHealthUpdate()) {
+            PacketManager::EnemyHealthUpdate healthUpdate = PM->PopPendingEnemyHealthUpdate();
+
+            onlinePlayer->SetCurrentLives(healthUpdate.lives);
+            onlinePlayer->SetCurrentHealthPoints(healthUpdate.health);
+
+            std::cout << "Current HP: " << localPlayer->GetCurrentHealthPoints() << " Current Lives: " << localPlayer->GetCurrentLives() << std::endl
+                << "Enemy HP: " << onlinePlayer->GetCurrentHealthPoints() << " Enemy Lives: " << onlinePlayer->GetCurrentLives() << std::endl;
         }
     }
 
