@@ -12,8 +12,13 @@
 class Gameplay : public Scene {
 private:
 	bool gameFinished = false;
+
 	OnlinePlayer* onlinePlayer = nullptr;
 	LocalPlayer* localPlayer = nullptr;
+
+	TextObject* resultText = nullptr;
+	float resultTimer = 0.0f;
+	const float RESULT_TIME = 3.0f;
 
 	bool CheckWinCondition(short row, short col);
 

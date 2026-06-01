@@ -4,6 +4,10 @@
 
 class OnlinePlayer : public Player {
 private:
+
+	short currentLives = 3;
+	short currentHealthPoints = 5;
+
 	struct MovementReceive {
 		unsigned int movementId = 0;
 		Vector2 position = Vector2(0.0f, 0.0f);
@@ -35,4 +39,9 @@ public:
 	void OnCollisionEnter(Object* other) override {
 		// El jugador online no colisiona con nada localmente
 	}
+
+	inline short GetCurrentLives() const { return currentLives;	}
+	inline short GetCurrentHealthPoints() const { return currentHealthPoints; }
+	inline void SetCurrentLives(short lives) { currentLives = lives; }
+	inline void SetCurrentHealthPoints(short health) { currentHealthPoints = health; }
 };

@@ -2,6 +2,6 @@
 
 class Damageable {
 public:
-	virtual void RecieveDamage(int amount) = 0;
+	virtual void RecieveDamage(short amount) = 0;
 	virtual bool IsDead() = 0;
 };
