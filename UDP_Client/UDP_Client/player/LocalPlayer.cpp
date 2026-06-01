@@ -128,7 +128,6 @@ void LocalPlayer::Shoot() {
 
 	Bullet* bullet = new Bullet(
 		"resources/bullet.png",
-		Vector2(0.0f, 0.0f), Vector2(16.0f, 16.0f),
 		bulletDirection,
 		PM->GetMyIndex(),
 		600.0f

@@ -123,7 +123,6 @@ void Gameplay::Update() {
 
         Bullet* bullet = new Bullet(
             "resources/bullet.png",
-            Vector2(0.0f, 0.0f), Vector2(16.0f, 16.0f),
             Vector2(shootData.directionX, shootData.directionY),
             shootData.shooterNetworkId,
             600.0f

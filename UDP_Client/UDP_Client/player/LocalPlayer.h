@@ -31,4 +31,5 @@ public:
 	void Move() override;
 	void Update() override;
 	void TrySendMovement();
+	void Shoot() override;
 };

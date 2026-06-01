@@ -1,5 +1,6 @@
 #pragma once
 #include "../ImageObject.h"
+#include "../Managers/RenderManager.h"
 
 class Bullet : public ImageObject {
 private:
@@ -10,11 +11,18 @@ private:
 	float speed = 100.0f;
 	unsigned short shooterNetworkId;
 public:
-	Bullet(std::string texturepath, Vector2 sourceOffset, Vector2 sourceSize, Vector2 direction, unsigned short shooterNetworkId, float speed)
-		: ImageObject(texturepath, sourceOffset, sourceSize), shooterNetworkId(shooterNetworkId), direction(direction), speed(speed) {
+	Bullet(std::string texturepath, Vector2 direction, unsigned short shooterNetworkId, float speed)
+		: ImageObject(texturepath, Vector2(0.0f, 0.0f), Vector2(0.0f, 0.0f)), shooterNetworkId(shooterNetworkId), direction(direction), speed(speed) {
 		timeHasBeenShooted = TIME.GetElapsedTime();
-		transform->scale = Vector2(0.8f, 0.8f);
-		marginToDestroy = sourceSize.x * transform->scale.x;
+
+		sf::Texture* tex = RM->GetTexture(texturepath);
+		if (tex != nullptr) {
+			sf::Vector2u texSize = tex->getSize();
+			transform->size = Vector2(static_cast<float>(texSize.x), static_cast<float>(texSize.y));
+		}
+
+		transform->scale = Vector2(0.5f, 0.5f);
+		marginToDestroy = transform->size.x * transform->scale.x;
 	}
 	void Update() override;
 	void OnCollisionEnter(Object* other) override;

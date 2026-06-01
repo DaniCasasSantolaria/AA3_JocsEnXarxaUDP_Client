@@ -8,7 +8,7 @@ void Player::OnCollisionEnter(Object* other) {
 	if (Bullet* bullet = dynamic_cast<Bullet*>(other)) {
 		if (bullet->GetShooterNetworkId() != PM->GetMyIndex()) {
 			RecieveDamage(1);
-			AUDIO->PlayClip("hit_enemy", 0, 80);
+			// AUDIO->PlayClip("hit_enemy", 0, 80);
 			other->Destroy();
 		}
 		return;
