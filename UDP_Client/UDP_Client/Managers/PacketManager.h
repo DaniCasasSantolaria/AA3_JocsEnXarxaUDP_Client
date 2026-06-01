@@ -118,7 +118,6 @@ private:
 
     // Estado de conexión
     unsigned short myIndex = 0;
-    short myMatchPlayerId = -1; // 0 o 1
     unsigned short totalPlayers = 0;
     bool serverConnected = false;
 
@@ -197,7 +196,6 @@ public:
 
     //MATCHMAKE
     void SendMatchmakeRequest(matchMode mode);
-    inline short GetMyMatchPlayerId() const { return myMatchPlayerId; }
 
 
     //MAP
@@ -227,7 +225,7 @@ public:
 	//WIN NOTIFICATION
     void SendPlayerDefeated();
 
-	//Match Result
+	//MATCH RESULT
     inline bool HasMatchFinished() const { return matchFinishedReceived; }
     inline matchResult GetLastMatchResult() const { return lastMatchResult; }
     inline matchFinishReason GetLastMatchFinishReason() const { return lastMatchFinishReason; }

@@ -20,9 +20,6 @@ private:
 	float resultTimer = 0.0f;
 	const float RESULT_TIME = 3.0f;
 
-	Vector2 leftSpawnPosition = Vector2(RM->WINDOW_WIDTH / 2.0f - 300.0f, RM->WINDOW_HEIGHT / 2.0f);
-	Vector2 rightSpawnPosition = Vector2(RM->WINDOW_WIDTH / 2.0f + 300.0f, RM->WINDOW_HEIGHT / 2.0f);
-
 	bool CheckWinCondition(short row, short col);
 
 	void FinishGame();

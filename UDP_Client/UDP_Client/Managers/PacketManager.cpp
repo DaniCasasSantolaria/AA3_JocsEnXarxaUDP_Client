@@ -263,7 +263,6 @@ void PacketManager::Matchmake(sf::Packet& data) {
 	matchmakeStatus status;
 	data >> mode;
 	data >> status;
-	data >> myMatchPlayerId;
 	bool matchStarted = false;
 	switch (mode)
 	{

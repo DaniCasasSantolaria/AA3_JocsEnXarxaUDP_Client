@@ -169,7 +169,19 @@ void LocalPlayer::RecieveDamage(short amount) {
 	currentLives--;
 
 	if (currentLives > 0) {
-		Respawn();
+		currentHealthPoints = maxHealthPoints;
+
+		isGrounded = false;
+
+		pendingSentMovements.clear();
+
+		if (currentMovementID > 0) {
+			lastValidatedMovementId = currentMovementID - 1;
+		}
+
+		lastTimeSentMovement = timeToSendMovement;
+
+		ChangeAnimation(PlayerState::IDLE);
 		return;
 	}
 
@@ -188,27 +200,4 @@ void LocalPlayer::RecieveDamage(short amount) {
 
 bool LocalPlayer::IsDead() {
 	return defeated;
-}
-
-void LocalPlayer::SetRespawnPosition(const Vector2& position) {
-	spawnPosition = position;
-}
-
-void LocalPlayer::Respawn() {
-	currentHealthPoints = maxHealthPoints;
-
-	transform->position = spawnPosition;
-	physics->SetVelocity(Vector2(0.0f, 0.0f));
-
-	isGrounded = false;
-
-	pendingSentMovements.clear();
-
-	if (currentMovementID > 0) {
-		lastValidatedMovementId = currentMovementID - 1;
-	}
-
-	lastTimeSentMovement = timeToSendMovement;
-
-	ChangeAnimation(PlayerState::IDLE);
 }
