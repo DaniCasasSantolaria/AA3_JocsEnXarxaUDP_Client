@@ -155,6 +155,10 @@ void PacketManager::Update() {
 				HandleShoot(buffer, receivedSize, readPos);
 				break;
 
+			case HIT:
+				HandleHit(buffer, receivedSize, readPos);
+				break;
+
 			case PLAYER_HEALTH_UPDATE:
 				HandleEnemyHealthUpdate(buffer, receivedSize, readPos);
 				break;
@@ -740,6 +744,37 @@ void PacketManager::HandleIrregularityWarning(const char* buffer, std::size_t re
 	}
 
 	std::cout << "Irregularidad detectada: " << irregularityCount << "/3" << std::endl;
+}
+
+void PacketManager::SendHit() {
+	char buffer[1024];
+	std::size_t size = 0;
+
+	udpPacketType packetType = HIT;
+	std::memcpy(buffer + size, &packetType, sizeof(packetType));
+	size += sizeof(packetType);
+
+	std::memcpy(buffer + size, &myIndex, sizeof(myIndex));
+	size += sizeof(myIndex);
+
+	if (udpSocket.send(buffer, size, UDP_SERVER_IP, UDP_SERVER_PORT) != sf::Socket::Status::Done) {
+		std::cerr << "Failed to send hit packet" << std::endl;
+	}
+}
+
+void PacketManager::HandleHit(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
+	unsigned short targetPlayerId = 0;
+	std::memcpy(&targetPlayerId, buffer + readPos, sizeof(targetPlayerId));
+
+	HitConfirmedData hitData;
+	hitData.targetPlayerId = targetPlayerId;
+	pendingHitConfirmations.push(hitData);
+}
+
+PacketManager::HitConfirmedData PacketManager::PopPendingHitConfirmation() {
+	HitConfirmedData hitData = pendingHitConfirmations.front();
+	pendingHitConfirmations.pop();
+	return hitData;
 }
 
 void PacketManager::SendShoot(float spawnX, float spawnY, float directionX, float directionY) {

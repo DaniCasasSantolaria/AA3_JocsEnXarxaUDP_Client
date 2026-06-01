@@ -219,6 +219,16 @@ public:
     void RankingRequest();
 
 
+    //HIT
+    struct HitConfirmedData {
+        unsigned short targetPlayerId = 0;
+    };
+
+    void SendHit();
+    void HandleHit(const char* buffer, std::size_t receivedSize, std::size_t readPos);
+    inline bool HasPendingHitConfirmation() const { return !pendingHitConfirmations.empty(); }
+    HitConfirmedData PopPendingHitConfirmation();
+
     //SHOOT
     struct ShootData {
         unsigned short shooterNetworkId = 0;
@@ -280,4 +290,7 @@ private:
 
     //Shoot
     std::queue<ShootData> pendingShoots;
+
+    //Hit
+    std::queue<HitConfirmedData> pendingHitConfirmations;
 };

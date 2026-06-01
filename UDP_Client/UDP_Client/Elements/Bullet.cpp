@@ -15,6 +15,9 @@ void Bullet::OnCollisionEnter(Object* other) {
 	if (other->IsPlayer()) {
 		if (other->IsLocalPlayer() && shooterNetworkId == PM->GetMyIndex()) return;
 		Destroy();
+		if (!other->IsLocalPlayer() && shooterNetworkId == PM->GetMyIndex()) {
+			PM->SendHit();
+		}
 		return;
 	}
 	if (dynamic_cast<ImageObject*>(other)) Destroy();

@@ -173,6 +173,13 @@ void Gameplay::Update() {
     }
 
 
+    while (PM->HasPendingHitConfirmation()) {
+        PacketManager::HitConfirmedData hitData = PM->PopPendingHitConfirmation();
+        if (hitData.targetPlayerId == PM->GetMyIndex() && localPlayer != nullptr) {
+            localPlayer->RecieveDamage(1);
+        }
+    }
+
     while (PM->HasPendingShoot()) {
         PacketManager::ShootData shootData = PM->PopPendingShoot();
 
