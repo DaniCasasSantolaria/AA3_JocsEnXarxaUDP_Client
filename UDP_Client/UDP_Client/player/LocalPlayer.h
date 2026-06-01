@@ -53,5 +53,4 @@ public:
 	inline short GetMaxLives() const { return maxLives; }
 	inline short GetMaxHealthPoints() const { return maxHealthPoints; }
 	inline bool HasLostMatch() const { return defeated; }
-	bool IsLocalPlayer() const override { return true; }
 };

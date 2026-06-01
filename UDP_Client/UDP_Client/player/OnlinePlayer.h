@@ -29,6 +29,7 @@ public:
 		: Player(texturepath, sourceOffset, sourceSize, numRows, numColumns, frameTime, hasToLoop, shootCooldown, life, false) {
 		this->GetRigidbody()->SetGravity(0.0f);
 		this->GetRigidbody()->SetVelocity(Vector2(0.0f, 0.0f));
+		this->GetRigidbody()->AddCollider(new AABB(Vector2(0.0f, 0.0f), Vector2(1.0f, 1.0f)));
 	}
 
 	void Move() override;
