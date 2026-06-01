@@ -35,6 +35,7 @@ public:
 	}
 	virtual void OnCollisionEnter(Object* other) {}
 	virtual bool IsPlayer() const { return false; }
+	virtual bool IsLocalPlayer() const { return false; }
 
 	inline ~Object() {
 		delete transform;

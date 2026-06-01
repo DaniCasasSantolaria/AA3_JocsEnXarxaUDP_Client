@@ -1,5 +1,6 @@
 #include "Bullet.h"
 #include "../Managers/RenderManager.h"
+#include "../Managers/PacketManager.h"
 
 void Bullet::Update() {
 	ImageObject::Update();
@@ -11,6 +12,10 @@ void Bullet::Update() {
 }
 
 void Bullet::OnCollisionEnter(Object* other) {
-	if (other->IsPlayer()) return;
+	if (other->IsPlayer()) {
+		if (other->IsLocalPlayer() && shooterNetworkId == PM->GetMyIndex()) return;
+		Destroy();
+		return;
+	}
 	if (dynamic_cast<ImageObject*>(other)) Destroy();
 }
