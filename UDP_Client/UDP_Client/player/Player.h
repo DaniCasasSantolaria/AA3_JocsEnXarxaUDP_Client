@@ -63,7 +63,6 @@ public:
 
 	void ChangeAnimation(PlayerState newState);
 
-	bool IsPlayer() const override { return true; }
 	inline void ResetLifes() { life = maxLifes; }
 	inline bool IsDead() override { return life <= 0; }
 	inline short* GetScore() { return &score; }

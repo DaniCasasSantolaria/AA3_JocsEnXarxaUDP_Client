@@ -26,6 +26,8 @@ private:
 	bool defeated = false;
 	bool defeatSent = false;
 
+	bool pendingHealthDebugPrint = false;
+
 public:
 	LocalPlayer() = default;
 	LocalPlayer(std::string texturepath, Vector2 sourceOffset, Vector2 sourceSize, unsigned short numRows, unsigned short numColumns, 
@@ -42,8 +44,6 @@ public:
 	void TrySendMovement();
 	void Shoot() override;
 
-	void LoseHealthPoint();
-
 	void RecieveDamage(short amount) override;
 
 	bool IsDead() override;
@@ -53,5 +53,6 @@ public:
 	inline short GetMaxLives() const { return maxLives; }
 	inline short GetMaxHealthPoints() const { return maxHealthPoints; }
 	inline bool HasLostMatch() const { return defeated; }
-	bool IsLocalPlayer() const override { return true; }
+
+	bool ConsumePendingHealthDebugPrint();
 };

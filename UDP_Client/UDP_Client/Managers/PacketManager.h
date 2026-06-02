@@ -6,6 +6,7 @@
 #include <vector>
 #include <queue>
 #include <utility>
+#include <unordered_set>
 #include "../Vector2.h"
 
 #define PM PacketManager::Instance()
@@ -33,7 +34,9 @@ enum udpPacketType {
     DISCONNECTED_PLAYER,
     IRREGULARITY_WARNING,
     PLAYER_HEALTH_UPDATE,
-    MATCH_FINISHED
+    MATCH_FINISHED,
+    SHOOT_ACK,
+    SHOOT_CONFIRMED
 };
 
 // Enum de resultados posibles en autenticaci�n
@@ -109,7 +112,7 @@ private:
     //UDP
     unsigned const short UDP_SERVER_PORT = 55008;
     unsigned const short UDP_CLIENT_PORT = 55009;
-    const sf::IpAddress UDP_SERVER_IP = sf::IpAddress(10, 8, 0, 4); // IP
+    const sf::IpAddress UDP_SERVER_IP = sf::IpAddress(10, 8, 0, 3); // IP
     sf::UdpSocket udpSocket;
     bool udpConnected = false;
     unsigned int urgentBitmask = 00000001;
@@ -239,9 +242,13 @@ public:
     };
 
     void SendShoot(float spawnX, float spawnY, float directionX, float directionY);
+    void SendShootAck(unsigned short criticalPacketId);
     void HandleShoot(const char* buffer, std::size_t receivedSize, std::size_t readPos);
+    void HandleShootConfirmed(const char* buffer, std::size_t receivedSize, std::size_t readPos);
     inline bool HasPendingShoot() const { return !pendingShoots.empty(); }
     ShootData PopPendingShoot();
+    inline bool HasShootConfirmed() const { return pendingShootConfirmedCount > 0; }
+    inline void ConsumeShootConfirmed() { if (pendingShootConfirmedCount > 0) pendingShootConfirmedCount--; }
 
     //MOVEMENT
 	void SendMovement(float x, float y, unsigned int movementID);
@@ -290,6 +297,8 @@ private:
 
     //Shoot
     std::queue<ShootData> pendingShoots;
+    std::unordered_set<unsigned short> processedShootIds;
+    unsigned short pendingShootConfirmedCount = 0;
 
     //Hit
     std::queue<HitConfirmedData> pendingHitConfirmations;

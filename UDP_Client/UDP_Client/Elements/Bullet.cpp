@@ -1,6 +1,8 @@
 #include "Bullet.h"
 #include "../Managers/RenderManager.h"
 #include "../Managers/PacketManager.h"
+#include "../player/Player.h"
+#include "../player/LocalPlayer.h"
 
 void Bullet::Update() {
 	ImageObject::Update();
@@ -12,13 +14,34 @@ void Bullet::Update() {
 }
 
 void Bullet::OnCollisionEnter(Object* other) {
-	if (other->IsPlayer()) {
-		if (other->IsLocalPlayer() && shooterNetworkId == PM->GetMyIndex()) return;
-		Destroy();
-		if (!other->IsLocalPlayer() && shooterNetworkId == PM->GetMyIndex()) {
-			PM->SendHit();
-		}
-		return;
-	}
-	if (dynamic_cast<ImageObject*>(other)) Destroy();
+
+    LocalPlayer* localPlayer = dynamic_cast<LocalPlayer*>(other);
+
+    if (localPlayer != nullptr) {
+
+        if (shooterNetworkId == PM->GetMyIndex()) {
+            return;
+        }
+
+        localPlayer->RecieveDamage(1);
+
+        Destroy();
+        return;
+    }
+
+    Player* player = dynamic_cast<Player*>(other);
+
+    if (player != nullptr) {
+        if (shooterNetworkId == PM->GetMyIndex()) {
+            Destroy();
+            return;
+        }
+
+        return;
+    }
+
+    if (dynamic_cast<ImageObject*>(other)) {
+        Destroy();
+        return;
+    }
 }

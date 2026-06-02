@@ -183,6 +183,10 @@ void PacketManager::Update() {
 				HandleMatchFinished(buffer, receivedSize, readPos);
 				break;
 
+			case SHOOT_CONFIRMED:
+				HandleShootConfirmed(buffer, receivedSize, readPos);
+				break;
+
 			default:
 				break;
 			}
@@ -685,6 +689,8 @@ void PacketManager::UpdatePingSystem() {
 		std::cout << "UDP server timeout" << std::endl;
 		udpConnected = false;
 		waitingPong = false;
+		processedShootIds.clear();
+	pendingShootConfirmedCount = 0;
 		udpSocket.unbind();
 		SM.SetNextScene("Lobby");
 		return;
@@ -709,6 +715,8 @@ void PacketManager::HandleDisconnectedPlayer(const char* buffer, std::size_t rec
 
 	udpConnected = false;
 	waitingPong = false;
+	processedShootIds.clear();
+	pendingShootConfirmedCount = 0;
 	udpSocket.unbind();
 
 	SM.SetNextScene("Lobby");
@@ -810,40 +818,61 @@ void PacketManager::SendShoot(float spawnX, float spawnY, float directionX, floa
 
 void PacketManager::HandleShoot(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
 	unsigned short shooterNetworkId = 0;
-	unsigned int receivedUrgentBitmask = 0;
-	float directionX = 0.0f;
-	float directionY = 0.0f;
-	float spawnX = 0.0f;
-	float spawnY = 0.0f;
+	unsigned short criticalPacketId = 0;
+
+	if (readPos + sizeof(shooterNetworkId) + sizeof(criticalPacketId) > receivedSize)
+		return;
 
 	std::memcpy(&shooterNetworkId, buffer + readPos, sizeof(shooterNetworkId));
 	readPos += sizeof(shooterNetworkId);
 
-	std::memcpy(&receivedUrgentBitmask, buffer + readPos, sizeof(receivedUrgentBitmask));
-	readPos += sizeof(receivedUrgentBitmask);
+	std::memcpy(&criticalPacketId, buffer + readPos, sizeof(criticalPacketId));
+	readPos += sizeof(criticalPacketId);
 
-	std::memcpy(&directionX, buffer + readPos, sizeof(directionX));
-	readPos += sizeof(directionX);
-
-	std::memcpy(&directionY, buffer + readPos, sizeof(directionY));
-	readPos += sizeof(directionY);
-
-	std::memcpy(&spawnX, buffer + readPos, sizeof(spawnX));
-	readPos += sizeof(spawnX);
-
-	std::memcpy(&spawnY, buffer + readPos, sizeof(spawnY));
-	readPos += sizeof(spawnY);
+	SendShootAck(criticalPacketId);
 
 	if (shooterNetworkId == myIndex) return;
 
+	if (processedShootIds.count(criticalPacketId) > 0) return;
+	processedShootIds.insert(criticalPacketId);
+
 	ShootData shootData;
 	shootData.shooterNetworkId = shooterNetworkId;
-	shootData.directionX = directionX;
-	shootData.directionY = directionY;
-	shootData.spawnX = spawnX;
-	shootData.spawnY = spawnY;
 
 	pendingShoots.push(shootData);
+}
+
+void PacketManager::HandleShootConfirmed(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
+	unsigned short shooterNetworkId = 0;
+
+	if (readPos + sizeof(shooterNetworkId) > receivedSize)
+		return;
+
+	std::memcpy(&shooterNetworkId, buffer + readPos, sizeof(shooterNetworkId));
+	readPos += sizeof(shooterNetworkId);
+
+	if (shooterNetworkId != myIndex) return;
+
+	pendingShootConfirmedCount++;
+}
+
+void PacketManager::SendShootAck(unsigned short criticalPacketId) {
+	char buffer[1024];
+	std::size_t size = 0;
+
+	udpPacketType packetType = SHOOT_ACK;
+	std::memcpy(buffer + size, &packetType, sizeof(packetType));
+	size += sizeof(packetType);
+
+	std::memcpy(buffer + size, &myIndex, sizeof(myIndex));
+	size += sizeof(myIndex);
+
+	std::memcpy(buffer + size, &criticalPacketId, sizeof(criticalPacketId));
+	size += sizeof(criticalPacketId);
+
+	if (udpSocket.send(buffer, size, UDP_SERVER_IP, UDP_SERVER_PORT) != sf::Socket::Status::Done) {
+		std::cerr << "Failed to send SHOOT_ACK packet" << std::endl;
+	}
 }
 
 PacketManager::ShootData PacketManager::PopPendingShoot() {
@@ -889,5 +918,7 @@ void PacketManager::HandleMatchFinished(const char* buffer, std::size_t received
 
 	udpConnected = false;
 	waitingPong = false;
+	processedShootIds.clear();
+	pendingShootConfirmedCount = 0;
 	udpSocket.unbind();
 }

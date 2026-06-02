@@ -172,10 +172,6 @@ void LocalPlayer::TrySendMovement() {
 	}
 }
 
-void LocalPlayer::LoseHealthPoint() {
-	RecieveDamage(1);
-}
-
 void LocalPlayer::RecieveDamage(short amount) {
 	if (defeated || amount <= 0) {
 		return;
@@ -187,6 +183,7 @@ void LocalPlayer::RecieveDamage(short amount) {
 
 	if (currentHealthPoints > 0) {
 		PM->SendLifeHealthUpdate(currentLives, currentHealthPoints);
+		pendingHealthDebugPrint = true;
 		return;
 	}
 
@@ -196,6 +193,7 @@ void LocalPlayer::RecieveDamage(short amount) {
 		currentHealthPoints = maxHealthPoints;
 
 		PM->SendLifeHealthUpdate(currentLives, currentHealthPoints);
+		pendingHealthDebugPrint = true;
 
 		isGrounded = false;
 
@@ -223,4 +221,13 @@ void LocalPlayer::RecieveDamage(short amount) {
 
 bool LocalPlayer::IsDead() {
 	return defeated;
+}
+
+bool LocalPlayer::ConsumePendingHealthDebugPrint() {
+	if (!pendingHealthDebugPrint) {
+		return false;
+	}
+
+	pendingHealthDebugPrint = false;
+	return true;
 }

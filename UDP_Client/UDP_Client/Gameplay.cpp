@@ -72,6 +72,19 @@ bool Gameplay::ShouldFinishGame() const {
     return activePlayers <= 1 || piecesPlaced >= MAX_ROWS * MAX_COLS;*/
 }
 
+void Gameplay::PrintHealthDebug(const char* reason) {
+    if (localPlayer == nullptr || onlinePlayer == nullptr) {
+        return;
+    }
+
+    std::cout << reason << std::endl;
+
+    std::cout << "Current HP: " << localPlayer->GetCurrentHealthPoints()
+              << " Current Lives: " << localPlayer->GetCurrentLives() << std::endl
+              << "Enemy HP: " << onlinePlayer->GetCurrentHealthPoints()
+              << " Enemy Lives: " << onlinePlayer->GetCurrentLives() << std::endl;
+}
+
 // Finaliza el juego desconectando a los jugadores
 void Gameplay::FinishGame()
 {
@@ -99,7 +112,7 @@ void Gameplay::FinishGame()
 void Gameplay::Update() {
 
     if (Input.GetEvent(sf::Keyboard::Key::H, KeyState::DOWN)) {
-        localPlayer->LoseHealthPoint();
+        localPlayer->RecieveDamage(1);
 
         std::cout << "Current HP: " << localPlayer->GetCurrentHealthPoints() << " Current Lives: " << localPlayer->GetCurrentLives() << std::endl
             << "Enemy HP: " << onlinePlayer->GetCurrentHealthPoints() << " Enemy Lives: " << onlinePlayer->GetCurrentLives() << std::endl;
@@ -158,8 +171,7 @@ void Gameplay::Update() {
             onlinePlayer->SetCurrentLives(healthUpdate.lives);
             onlinePlayer->SetCurrentHealthPoints(healthUpdate.health);
 
-            std::cout << "Current HP: " << localPlayer->GetCurrentHealthPoints() << " Current Lives: " << localPlayer->GetCurrentLives() << std::endl
-                << "Enemy HP: " << onlinePlayer->GetCurrentHealthPoints() << " Enemy Lives: " << onlinePlayer->GetCurrentLives() << std::endl;
+            PrintHealthDebug("YOU Hit the Enemy");
         }
     }
 
@@ -173,12 +185,12 @@ void Gameplay::Update() {
     }
 
 
-    while (PM->HasPendingHitConfirmation()) {
+    /*while (PM->HasPendingHitConfirmation()) {
         PacketManager::HitConfirmedData hitData = PM->PopPendingHitConfirmation();
         if (hitData.targetPlayerId == PM->GetMyIndex() && localPlayer != nullptr) {
             localPlayer->RecieveDamage(1);
         }
-    }
+    }*/
 
     while (PM->HasPendingShoot()) {
         PacketManager::ShootData shootData = PM->PopPendingShoot();
@@ -194,6 +206,10 @@ void Gameplay::Update() {
     }
 
     Scene::Update();
+
+    if (localPlayer != nullptr && localPlayer->ConsumePendingHealthDebugPrint()) {
+        PrintHealthDebug("YOU recive damage");
+    }
 
     if (localPlayer != nullptr) {
         localPlayer->TrySendMovement();
