@@ -14,13 +14,34 @@ void Bullet::Update() {
 }
 
 void Bullet::OnCollisionEnter(Object* other) {
-	if (dynamic_cast<Player*>(other)) {
-		if (dynamic_cast<LocalPlayer*>(other) && shooterNetworkId == PM->GetMyIndex()) return;
-		if (LocalPlayer* lp = dynamic_cast<LocalPlayer*>(other)) {
-			lp->RecieveDamage(1);
-		}
-		Destroy();
-		return;
-	}
-	if (dynamic_cast<ImageObject*>(other)) Destroy();
+
+    LocalPlayer* localPlayer = dynamic_cast<LocalPlayer*>(other);
+
+    if (localPlayer != nullptr) {
+
+        if (shooterNetworkId == PM->GetMyIndex()) {
+            return;
+        }
+
+        localPlayer->RecieveDamage(1);
+
+        Destroy();
+        return;
+    }
+
+    Player* player = dynamic_cast<Player*>(other);
+
+    if (player != nullptr) {
+        if (shooterNetworkId == PM->GetMyIndex()) {
+            Destroy();
+            return;
+        }
+
+        return;
+    }
+
+    if (dynamic_cast<ImageObject*>(other)) {
+        Destroy();
+        return;
+    }
 }

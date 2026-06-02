@@ -9,6 +9,10 @@ void Player::OnCollisionEnter(Object* other) {
 		return;
 	}
 
+	if (dynamic_cast<Player*>(other)) {
+		return;
+	}
+
 	if (dynamic_cast<ImageObject*>(other)) {
 		ResolveSolidCollision(other);
 	}

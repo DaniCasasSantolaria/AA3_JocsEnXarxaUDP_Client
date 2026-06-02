@@ -25,6 +25,8 @@ private:
 	void FinishGame();
 	bool ShouldFinishGame() const;
 
+	void PrintHealthDebug(const char* reason);
+
 public:
 	Gameplay() = default;
 	void Update() override;
