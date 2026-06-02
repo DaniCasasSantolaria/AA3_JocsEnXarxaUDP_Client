@@ -129,6 +129,14 @@ void LocalPlayer::Shoot() {
 	PM->SendShoot(spawnPosition.x, spawnPosition.y, bulletDirection.x, bulletDirection.y);
 }
 
+void LocalPlayer::Taunt()
+{
+	if (!Input.GetEvent(sf::Keyboard::Key::O, KeyState::DOWN)) return;
+
+	AUDIO->PlayClip("taunt", 0, 128);
+	PM->SendTaunt();
+}
+
 void LocalPlayer::Update() {
 	if (defeated) {
 		physics->SetVelocity(Vector2(0.0f, 0.0f));
@@ -140,6 +148,7 @@ void LocalPlayer::Update() {
 	ImageObject::Update();
 	isGrounded = false;
 	Shoot();
+	Taunt();
 }
 
 void LocalPlayer::TrySendMovement() {

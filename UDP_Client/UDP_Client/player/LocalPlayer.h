@@ -43,6 +43,7 @@ public:
 	void Update() override;
 	void TrySendMovement();
 	void Shoot() override;
+	void Taunt();
 
 	void RecieveDamage(short amount) override;
 

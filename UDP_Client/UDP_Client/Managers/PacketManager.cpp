@@ -159,6 +159,10 @@ void PacketManager::Update() {
 				HandleHit(buffer, receivedSize, readPos);
 				break;
 
+			case TAUNT:
+				HandleTaunt(buffer, receivedSize, readPos);
+				break;
+
 			case PLAYER_HEALTH_UPDATE:
 				HandleEnemyHealthUpdate(buffer, receivedSize, readPos);
 				break;
@@ -783,6 +787,46 @@ PacketManager::HitConfirmedData PacketManager::PopPendingHitConfirmation() {
 	HitConfirmedData hitData = pendingHitConfirmations.front();
 	pendingHitConfirmations.pop();
 	return hitData;
+}
+
+void PacketManager::SendTaunt()
+{
+	char buffer[1024];
+	std::size_t size = 0;
+
+	udpPacketType packetType = TAUNT;
+	unsigned int tauntId = 0;
+
+	std::memcpy(buffer + size, &packetType, sizeof(packetType));
+	size += sizeof(packetType);
+
+	std::memcpy(buffer + size, &myIndex, sizeof(myIndex));
+	size += sizeof(myIndex);
+
+	std::memcpy(buffer + size, &tauntId, sizeof(tauntId));
+	size += sizeof(tauntId);
+
+	if (udpSocket.send(buffer, size, UDP_SERVER_IP, UDP_SERVER_PORT) != sf::Socket::Status::Done) {
+		std::cout << "Failed to send taunt packet" << std::endl;
+	}
+}
+
+void PacketManager::HandleTaunt(const char* buffer, std::size_t receivedSize, std::size_t readPos)
+{
+	unsigned short clientId = 0;
+	unsigned int tauntId = 0;
+
+	std::memcpy(&clientId, buffer + readPos, sizeof(clientId));
+	readPos += sizeof(clientId);
+
+	std::memcpy(&tauntId, buffer + readPos, sizeof(tauntId));
+	readPos += sizeof(tauntId);
+
+	if (clientId == myIndex) {
+		return;
+	}
+
+	AUDIO->PlayClip("taunt", 0, 128);
 }
 
 void PacketManager::SendShoot(float spawnX, float spawnY, float directionX, float directionY) {

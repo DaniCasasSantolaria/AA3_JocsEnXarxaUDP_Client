@@ -69,6 +69,7 @@ void Game::Init() {
 
 	//SFX
 	AUDIO->LoadClip("hover");
+	AUDIO->LoadClip("taunt");
 
 	//INIT SCENES
 	SM.AddScene("Login", new Login());

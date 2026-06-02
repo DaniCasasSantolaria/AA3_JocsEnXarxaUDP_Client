@@ -8,6 +8,7 @@
 #include <utility>
 #include <unordered_set>
 #include "../Vector2.h"
+#include "AudioManager.h"
 
 #define PM PacketManager::Instance()
 
@@ -83,7 +84,8 @@ struct PlayerInfo {
     int score = 0;
 };
 
-#define MAX_PLAYERS 4
+
+#define MAX_PLAYERS 2
 
 sf::Packet& operator <<(sf::Packet& packet, packetType type);
 sf::Packet& operator <<(sf::Packet& packet, authResult result);
@@ -232,6 +234,10 @@ public:
     void HandleHit(const char* buffer, std::size_t receivedSize, std::size_t readPos);
     inline bool HasPendingHitConfirmation() const { return !pendingHitConfirmations.empty(); }
     HitConfirmedData PopPendingHitConfirmation();
+
+    //TAUNT
+    void SendTaunt();
+    void HandleTaunt(const char* buffer, std::size_t receivedSize, std::size_t readPos);
 
     //SHOOT
     struct ShootData {
