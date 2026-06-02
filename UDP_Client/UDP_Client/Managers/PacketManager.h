@@ -29,6 +29,7 @@ enum udpPacketType {
     REGISTER_CLIENT,
     SHOOT,
     HIT,
+    TAUNT,
     PING,
     PONG,
     DISCONNECTED_PLAYER,
@@ -104,7 +105,7 @@ class PacketManager {
 private:
     // Constantes de configuraci�n de red
     unsigned const short LISTENER_PORT = 55007; // Port
-    const sf::IpAddress SERVER_IP = sf::IpAddress(10, 8, 0, 3); // IP
+    const sf::IpAddress SERVER_IP = sf::IpAddress(10, 8, 0, 2); // IP
 
     // TCP Sockets de comunicaci�n
     sf::TcpSocket socket;
@@ -112,7 +113,7 @@ private:
     //UDP
     unsigned const short UDP_SERVER_PORT = 55008;
     unsigned const short UDP_CLIENT_PORT = 55009;
-    const sf::IpAddress UDP_SERVER_IP = sf::IpAddress(10, 8, 0, 3); // IP
+    const sf::IpAddress UDP_SERVER_IP = sf::IpAddress(10, 8, 0, 2); // IP
     sf::UdpSocket udpSocket;
     bool udpConnected = false;
     unsigned int urgentBitmask = 00000001;
