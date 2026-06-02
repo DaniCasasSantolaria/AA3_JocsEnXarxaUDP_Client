@@ -126,15 +126,6 @@ void LocalPlayer::Shoot() {
 		transform->position.y
 	);
 
-	Bullet* bullet = new Bullet(
-		"resources/bullet.png",
-		bulletDirection,
-		PM->GetMyIndex(),
-		600.0f
-	);
-	bullet->GetTransform()->position = spawnPosition;
-	SPAWN.SpawnObject(bullet);
-
 	PM->SendShoot(spawnPosition.x, spawnPosition.y, bulletDirection.x, bulletDirection.y);
 }
 

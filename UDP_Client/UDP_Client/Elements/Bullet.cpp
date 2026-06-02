@@ -15,6 +15,8 @@ void Bullet::Update() {
 
 void Bullet::OnCollisionEnter(Object* other) {
 
+    if (dynamic_cast<Bullet*>(other) != nullptr) return;
+
     LocalPlayer* localPlayer = dynamic_cast<LocalPlayer*>(other);
 
     if (localPlayer != nullptr) {

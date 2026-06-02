@@ -195,14 +195,35 @@ void Gameplay::Update() {
     while (PM->HasPendingShoot()) {
         PacketManager::ShootData shootData = PM->PopPendingShoot();
 
-        Bullet* bullet = new Bullet(
-            "resources/bullet.png",
-            Vector2(shootData.directionX, shootData.directionY),
-            shootData.shooterNetworkId,
-            600.0f
-        );
-        bullet->GetTransform()->position = Vector2(shootData.spawnX, shootData.spawnY);
-        SPAWN.SpawnObject(bullet);
+        if (onlinePlayer != nullptr) {
+            Vector2 bulletDirection = onlinePlayer->IsLookingRight() ? Vector2(1.0f, 0.0f) : Vector2(-1.0f, 0.0f);
+            float spawnOffsetX = (onlinePlayer->GetTransform()->size.x * (onlinePlayer->GetTransform()->scale.x > 0.0f ? onlinePlayer->GetTransform()->scale.x : -onlinePlayer->GetTransform()->scale.x)) / 2.0f;
+            Vector2 spawnPosition = Vector2(
+                onlinePlayer->GetTransform()->position.x + bulletDirection.x * spawnOffsetX,
+                onlinePlayer->GetTransform()->position.y
+            );
+
+            Bullet* bullet = new Bullet("resources/bullet.png", bulletDirection, shootData.shooterNetworkId, 600.0f);
+            bullet->GetTransform()->position = spawnPosition;
+            SPAWN.SpawnObject(bullet);
+        }
+    }
+
+    while (PM->HasShootConfirmed()) {
+        PM->ConsumeShootConfirmed();
+
+        if (localPlayer != nullptr) {
+            Vector2 bulletDirection = localPlayer->IsLookingRight() ? Vector2(1.0f, 0.0f) : Vector2(-1.0f, 0.0f);
+            float spawnOffsetX = (localPlayer->GetTransform()->size.x * (localPlayer->GetTransform()->scale.x > 0.0f ? localPlayer->GetTransform()->scale.x : -localPlayer->GetTransform()->scale.x)) / 2.0f;
+            Vector2 spawnPosition = Vector2(
+                localPlayer->GetTransform()->position.x + bulletDirection.x * spawnOffsetX,
+                localPlayer->GetTransform()->position.y
+            );
+
+            Bullet* bullet = new Bullet("resources/bullet.png", bulletDirection, PM->GetMyIndex(), 600.0f);
+            bullet->GetTransform()->position = spawnPosition;
+            SPAWN.SpawnObject(bullet);
+        }
     }
 
     Scene::Update();
