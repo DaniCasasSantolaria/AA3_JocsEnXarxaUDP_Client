@@ -67,4 +67,5 @@ public:
 	inline bool IsDead() override { return life <= 0; }
 	inline short* GetScore() { return &score; }
 	inline void SetScore(int newScore) { score = newScore; }
+	inline bool IsLookingRight() const { return lookingRight; }
 };
