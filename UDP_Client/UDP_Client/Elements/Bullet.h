@@ -10,6 +10,7 @@ private:
 	float timeToDestroy = 4.0f;
 	float speed = 100.0f;
 	unsigned short shooterNetworkId;
+	unsigned short damage = 1;
 public:
 	Bullet(std::string texturepath, Vector2 direction, unsigned short shooterNetworkId, float speed)
 		: ImageObject(texturepath, Vector2(0.0f, 0.0f), Vector2(0.0f, 0.0f)), shooterNetworkId(shooterNetworkId), direction(direction), speed(speed) {

@@ -25,7 +25,7 @@ void Bullet::OnCollisionEnter(Object* other) {
             return;
         }
 
-        localPlayer->RecieveDamage(1);
+        localPlayer->RecieveDamage(damage);
 
         Destroy();
         return;

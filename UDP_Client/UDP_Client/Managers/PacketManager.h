@@ -91,6 +91,8 @@ struct PlayerInfo {
 
 #define MAX_PLAYERS 4
 
+#define BUFFER_SIZE 1024
+
 sf::Packet& operator <<(sf::Packet& packet, packetType type);
 sf::Packet& operator <<(sf::Packet& packet, authResult result);
 sf::Packet& operator <<(sf::Packet& packet, matchMode mode);
@@ -139,6 +141,10 @@ private:
     bool waitingPong = false;
     unsigned int lastPingId = 0;
     sf::Clock udpClock;
+
+    const float PING_THRESHOLD = 1.0f;
+    const float PING_INTERVAL = 0.5f;
+    const float TIMEOUT = 3.0f;
 
     //TAUNT
     unsigned short pendingTauntCount = 0;

@@ -133,7 +133,7 @@ void PacketManager::Update() {
 	}
 
 	if (udpConnected) {
-		char buffer[1024];
+		char buffer[BUFFER_SIZE];
 		std::size_t receivedSize;
 		std::optional<sf::IpAddress> senderIP;
 		unsigned short senderPort;
@@ -530,7 +530,7 @@ void PacketManager::RankingRequest() {
 }
 
 void PacketManager::SendMovement(float x, float y, unsigned int movementID) {
-	char buffer[1024];
+	char buffer[BUFFER_SIZE];
 	std::size_t bufferDataSize = 0;
 
 	udpPacketType packetType = udpPacketType::MOVEMENT;
@@ -576,7 +576,7 @@ PacketManager::LocalValidation PacketManager::PopPendingLocalValidation() {
 }
 
 void PacketManager::SendLifeHealthUpdate(short lives, short health) {
-	char buffer[1024];
+	char buffer[BUFFER_SIZE];
 	std::size_t size = 0;
 
 	udpPacketType packetType = PLAYER_HEALTH_UPDATE;
@@ -610,7 +610,7 @@ PacketManager::EnemyHealthUpdate PacketManager::PopPendingEnemyHealthUpdate() {
 }
 
 void PacketManager::SendPing() {
-	char buffer[1024];
+	char buffer[BUFFER_SIZE];
 	std::size_t size = 0;
 
 	udpPacketType packetType = PING;
@@ -638,7 +638,7 @@ void PacketManager::SendPing() {
 }
 
 void PacketManager::SendPong(unsigned int pingId) {
-	char buffer[1024];
+	char buffer[BUFFER_SIZE];
 	std::size_t size = 0;
 
 	udpPacketType packetType = PONG;
@@ -699,10 +699,6 @@ void PacketManager::HandlePong(const char* buffer, std::size_t receivedSize, std
 }
 
 void PacketManager::UpdatePingSystem() {
-	const float PING_THRESHOLD = 1.0f;
-	const float PING_INTERVAL = 0.5f;
-	const float TIMEOUT = 3.0f;
-
 	float currentTime = udpClock.getElapsedTime().asSeconds();
 	float timeSinceLastPacket = currentTime - lastUdpPacketTime;
 
@@ -711,7 +707,7 @@ void PacketManager::UpdatePingSystem() {
 		udpConnected = false;
 		waitingPong = false;
 		processedShootIds.clear();
-	pendingShootConfirmedCount = 0;
+		pendingShootConfirmedCount = 0;
 		udpSocket.unbind();
 		SM.SetNextScene("Lobby");
 		return;
@@ -776,7 +772,7 @@ void PacketManager::HandleIrregularityWarning(const char* buffer, std::size_t re
 }
 
 void PacketManager::SendHit() {
-	char buffer[1024];
+	char buffer[BUFFER_SIZE];
 	std::size_t size = 0;
 
 	udpPacketType packetType = HIT;
@@ -813,7 +809,7 @@ PacketManager::HitConfirmedData PacketManager::PopPendingHitConfirmation() {
 
 void PacketManager::SendTaunt()
 {
-	char buffer[1024];
+	char buffer[BUFFER_SIZE];
 	std::size_t size = 0;
 
 	udpPacketType packetType = TAUNT;
@@ -857,7 +853,7 @@ void PacketManager::HandleTaunt(const char* buffer, std::size_t receivedSize, st
 }
 
 void PacketManager::SendShoot(float spawnX, float spawnY, float directionX, float directionY) {
-	char buffer[1024];
+	char buffer[BUFFER_SIZE];
 	std::size_t size = 0;
 
 	udpPacketType packetType = SHOOT;
@@ -918,7 +914,7 @@ void PacketManager::HandleShootConfirmed(const char* buffer, std::size_t receive
 }
 
 void PacketManager::SendShootAck(unsigned short criticalPacketId) {
-	char buffer[1024];
+	char buffer[BUFFER_SIZE];
 	std::size_t size = 0;
 
 	udpPacketType packetType = SHOOT_ACK;
