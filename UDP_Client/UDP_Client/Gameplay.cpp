@@ -39,39 +39,6 @@ void Gameplay::OnExit() {
     Scene::OnExit();
 }
 
-bool Gameplay::CheckWinCondition(short row, short col) {
-    //short player = grid[row][col]->playerID;
-    //if (player == -1)
-    //    return false;
-
-    //const short directions[4][2] = {
-    //    {0, 1},   // Horizontal
-    //    {1, 0},   // Vertical
-    //    {1, 1},   // Diagonal
-    //    {1, -1}   // Diagonal
-    //};
-
-    //for (unsigned short i = 0; i < 4; i++) {
-    //    short dRow = directions[i][0];
-    //    short dCol = directions[i][1];
-
-    //    short total = 1 + CountDirection(row, col, dRow, dCol, player) + CountDirection(row, col, -dRow, -dCol, player);
-
-    //    if (total >= 3) {
-    //        PM->RecordWinner(player);
-    //        return true;
-    //    }
-    //}
-
-    //return false;
-}
-
-// Verifica si el juego debe finalizar si queda 1 o ningún jugador activo o si se han colocado todas las piezas
-bool Gameplay::ShouldFinishGame() const {
-    /*short activePlayers = maxPlayers - PM->GetFinishedCount() - static_cast<short>(PM->disconnectedPlayers.size());
-    return activePlayers <= 1 || piecesPlaced >= MAX_ROWS * MAX_COLS;*/
-}
-
 void Gameplay::PrintHealthDebug(const char* reason) {
     if (localPlayer == nullptr || onlinePlayer == nullptr) {
         return;
@@ -83,30 +50,6 @@ void Gameplay::PrintHealthDebug(const char* reason) {
               << " Current Lives: " << localPlayer->GetCurrentLives() << std::endl
               << "Enemy HP: " << onlinePlayer->GetCurrentHealthPoints()
               << " Enemy Lives: " << onlinePlayer->GetCurrentLives() << std::endl;
-}
-
-// Finaliza el juego desconectando a los jugadores
-void Gameplay::FinishGame()
-{
-   /* if (gameFinished) return;
-    gameFinished = true;
-
-    for (unsigned short i = 0; i < maxPlayers; i++) {
-        if (!PM->HasFinished(i) && !PM->IsDisconnected(i)) {
-            PM->RecordWinner(i);
-        }
-    }
-
-    PM->DisconnectPeers();
-    PM->DisconnectFromServer();
-
-    if (PM->ConnectToServer()) {
-        PM->SendGameResult();
-        SM.SetNextScene("Lobby");
-    }
-    else {
-        std::cerr << "Failed to reconnect to server!" << std::endl;
-    }*/
 }
 
 void Gameplay::Update() {
@@ -185,14 +128,6 @@ void Gameplay::Update() {
             validation.position
         );
     }
-
-
-    /*while (PM->HasPendingHitConfirmation()) {
-        PacketManager::HitConfirmedData hitData = PM->PopPendingHitConfirmation();
-        if (hitData.targetPlayerId == PM->GetMyIndex() && localPlayer != nullptr) {
-            localPlayer->RecieveDamage(1);
-        }
-    }*/
 
     while (PM->HasPendingShoot()) {
         PacketManager::ShootData shootData = PM->PopPendingShoot();
