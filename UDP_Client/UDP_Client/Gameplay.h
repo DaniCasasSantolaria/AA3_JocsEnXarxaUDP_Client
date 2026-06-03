@@ -5,10 +5,6 @@
 #include "player/OnlinePlayer.h"
 #include "player/LocalPlayer.h"
 
-#define MAX_ROWS 6
-#define MAX_COLS 8
-#define MAX_PLAYERS 4
-
 class Gameplay : public Scene {
 private:
 	bool gameFinished = false;
@@ -19,11 +15,6 @@ private:
 	TextObject* resultText = nullptr;
 	float resultTimer = 0.0f;
 	const float RESULT_TIME = 3.0f;
-
-	bool CheckWinCondition(short row, short col);
-
-	void FinishGame();
-	bool ShouldFinishGame() const;
 
 	void PrintHealthDebug(const char* reason);
 

@@ -7,6 +7,7 @@
 #include <queue>
 #include <utility>
 #include <unordered_set>
+#include <cstdint>
 #include "../Vector2.h"
 #include "AudioManager.h"
 
@@ -37,8 +38,8 @@ enum udpPacketType {
     IRREGULARITY_WARNING,
     PLAYER_HEALTH_UPDATE,
     MATCH_FINISHED,
-    SHOOT_ACK,
-    SHOOT_CONFIRMED
+    CRITICAL_ACK,
+    CRITICAL_CONFIRMED
 };
 
 // Enum de resultados posibles en autenticaci�n
@@ -84,8 +85,13 @@ struct PlayerInfo {
     int score = 0;
 };
 
+#define NORMAL_PACKET 0b00000000
+#define URGENT_PACKET 0b00000001
+#define CRITIC_PACKET 0b00000010
 
-#define MAX_PLAYERS 4
+#define MAX_PLAYERS 2
+
+#define BUFFER_SIZE 1024
 
 sf::Packet& operator <<(sf::Packet& packet, packetType type);
 sf::Packet& operator <<(sf::Packet& packet, authResult result);
@@ -102,31 +108,27 @@ sf::Packet& operator >>(sf::Packet& packet, movementPacketType& status);
 sf::Packet& operator >>(sf::Packet& packet, matchFinishReason& reason);
 
 // Gestor de paquetes de red
-// Responsable de manejar toda la comunicaci�n TCP/UDP del cliente
+// Responsable de manejar toda la comunicacion TCP/UDP del cliente
 class PacketManager {
 private:
-    // Constantes de configuraci�n de red
+    // Constantes de configuracion de red
     unsigned const short LISTENER_PORT = 55007; // Port
-    const sf::IpAddress SERVER_IP = sf::IpAddress(10, 8, 0, 2); // IP
+    const sf::IpAddress SERVER_IP = sf::IpAddress(10, 8, 0, 3); // IP TCP
 
-    // TCP Sockets de comunicaci�n
+    // TCP Sockets de comunicacion
     sf::TcpSocket socket;
 
     //UDP
     unsigned const short UDP_SERVER_PORT = 55008;
     unsigned const short UDP_CLIENT_PORT = 55009;
-    const sf::IpAddress UDP_SERVER_IP = sf::IpAddress(10, 8, 0, 2); // IP
+    const sf::IpAddress UDP_SERVER_IP = sf::IpAddress(10, 8, 0, 2); // IP UDP
     sf::UdpSocket udpSocket;
     bool udpConnected = false;
-    unsigned int urgentBitmask = 00000001;
-	unsigned int criticBitmask = 00000010;
-
 
     // Estado de conexion
     unsigned short myIndex = 0;
     unsigned short totalPlayers = 0;
     bool serverConnected = false;
-
     bool matchFinishedReceived = false;
     matchResult lastMatchResult = MATCH_RESULT_LOSE;
     matchFinishReason lastMatchFinishReason = FINISH_BY_LIVES;
@@ -138,8 +140,13 @@ private:
     unsigned int lastPingId = 0;
     sf::Clock udpClock;
 
+    const float PING_THRESHOLD = 1.0f;
+    const float PING_INTERVAL = 0.5f;
+    const float TIMEOUT = 3.0f;
+
     //TAUNT
     unsigned short pendingTauntCount = 0;
+    unsigned int tauntId = 0;
 
     PacketManager() = default;
     PacketManager(PacketManager&) = delete;
@@ -155,7 +162,7 @@ public:
     // Flag para ocultar botones en la sala
     bool hideAllButtons = false;
 
-    // Struct para almacenar informaci�n de ranking
+    // Struct para almacenar informacion de ranking
     struct PlayerScore {
         std::string name;
         int score;
@@ -168,6 +175,7 @@ public:
         Vector2 position = Vector2(0.0f, 0.0f);
     };
 
+    //Validacion local de movimiento
     struct LocalValidation {
         unsigned int movementId = 0;
         Vector2 position = Vector2(0.0f, 0.0f);
@@ -180,12 +188,10 @@ public:
         short health = 0;
     };
 
-    // Variables p�blicas del juego
+    // Variables publicas del juego
     std::vector<PlayerScore> ranking = std::vector<PlayerScore>();
     std::string myUsername;
     PlayerInfo playerInfo;
-    short finalRanking[MAX_PLAYERS] = { -1, -1, -1, -1 };
-    unsigned short finishedCount = 0;
     std::string allUsernames[MAX_PLAYERS];
     std::vector<unsigned short> disconnectedPlayers;
 
@@ -254,13 +260,15 @@ public:
     };
 
     void SendShoot(float spawnX, float spawnY, float directionX, float directionY);
-    void SendShootAck(unsigned short criticalPacketId);
     void HandleShoot(const char* buffer, std::size_t receivedSize, std::size_t readPos);
-    void HandleShootConfirmed(const char* buffer, std::size_t receivedSize, std::size_t readPos);
     inline bool HasPendingShoot() const { return !pendingShoots.empty(); }
     ShootData PopPendingShoot();
     inline bool HasShootConfirmed() const { return pendingShootConfirmedCount > 0; }
     inline void ConsumeShootConfirmed() { if (pendingShootConfirmedCount > 0) pendingShootConfirmedCount--; }
+
+    //PAQUETES CRITICOS
+    void SendCriticalAck(unsigned short criticalPacketId);
+    void HandleCriticalConfirmed(const char* buffer, std::size_t receivedSize, std::size_t readPos);
 
     //MOVEMENT
 	void SendMovement(float x, float y, unsigned int movementID);
@@ -309,8 +317,10 @@ private:
 
     //Shoot
     std::queue<ShootData> pendingShoots;
-    std::unordered_set<unsigned short> processedShootIds;
     unsigned short pendingShootConfirmedCount = 0;
+
+	//Paquetes criticos
+    std::vector<unsigned short> processedCriticalIds;
 
     //Hit
     std::queue<HitConfirmedData> pendingHitConfirmations;

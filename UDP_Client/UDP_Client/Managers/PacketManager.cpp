@@ -1,9 +1,10 @@
 #include "PacketManager.h"
 #include "SceneManager.h"
-
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <cstdint>
+#include <algorithm>
 #include "../Maps/TileMap.h"
 
 sf::Packet& operator <<(sf::Packet& packet, packetType type) {
@@ -72,7 +73,7 @@ sf::Packet& operator >>(sf::Packet& packet, matchFinishReason& reason) {
 	return packet;
 }
 
-// Establece conexi�n TCP con el servidor central, desconecta primero si ya hay una conexi�n activa
+// Establece conexion TCP con el servidor central, desconecta primero si ya hay una conexion activa
 bool PacketManager::ConnectToServer() {
 	if (serverConnected) {
 		DisconnectFromServer();
@@ -88,7 +89,7 @@ bool PacketManager::ConnectToServer() {
 	return true;
 }
 
-// Cierra la conexi�n con el servidor, reinicia el socket y actualiza el estado de conexi�n
+// Cierra la conexion con el servidor, reinicia el socket y actualiza el estado de conexion
 void PacketManager::DisconnectFromServer() {
 	if (serverConnected) {
 		socket.disconnect();
@@ -99,7 +100,7 @@ void PacketManager::DisconnectFromServer() {
 }
 
 void PacketManager::Update() {
-	// Recibir paquetes del servidor
+	// Recibir paquetes del servidor TCP
 	if (serverConnected) {
 		sf::Packet packet;
 		if (socket.receive(packet) == sf::Socket::Status::Done) {
@@ -131,8 +132,9 @@ void PacketManager::Update() {
 		}
 	}
 
+	// Recibir paquetes del servidor UDP
 	if (udpConnected) {
-		char buffer[1024];
+		char buffer[BUFFER_SIZE];
 		std::size_t receivedSize;
 		std::optional<sf::IpAddress> senderIP;
 		unsigned short senderPort;
@@ -140,11 +142,38 @@ void PacketManager::Update() {
 		while (udpSocket.receive(buffer, sizeof(buffer), receivedSize, senderIP, senderPort) == sf::Socket::Status::Done) {
 			std::size_t readPos = 0;
 
+			uint8_t flags = NORMAL_PACKET;
+			std::memcpy(&flags, buffer + readPos, sizeof(flags));
+			readPos += sizeof(flags);
+
 			udpPacketType packetType;
 			std::memcpy(&packetType, buffer + readPos, sizeof(packetType));
 			readPos += sizeof(packetType);
 
 			lastUdpPacketTime = udpClock.getElapsedTime().asSeconds();
+
+			bool isDuplicate = false;
+			if (flags & CRITIC_PACKET) {
+				unsigned short criticalPacketId = 0;
+				if (readPos + sizeof(criticalPacketId) > receivedSize) {
+					continue;
+				}
+				std::memcpy(&criticalPacketId, buffer + readPos, sizeof(criticalPacketId));
+				readPos += sizeof(criticalPacketId);
+
+				SendCriticalAck(criticalPacketId);
+
+				if (std::find(processedCriticalIds.begin(), processedCriticalIds.end(), criticalPacketId) != processedCriticalIds.end()) {
+					isDuplicate = true;
+				}
+				else {
+					processedCriticalIds.push_back(criticalPacketId);
+				}
+			}
+
+			if (isDuplicate) {
+				continue;
+			}
 
 			switch (packetType) {
 			case MOVEMENT:
@@ -187,8 +216,8 @@ void PacketManager::Update() {
 				HandleMatchFinished(buffer, receivedSize, readPos);
 				break;
 
-			case SHOOT_CONFIRMED:
-				HandleShootConfirmed(buffer, receivedSize, readPos);
+			case CRITICAL_CONFIRMED:
+				HandleCriticalConfirmed(buffer, receivedSize, readPos);
 				break;
 
 			default:
@@ -278,6 +307,7 @@ void PacketManager::Register(sf::Packet& data) {
 	}
 }
 
+// Respuesta de matchmaking del servidor
 void PacketManager::Matchmake(sf::Packet& data) {
 	matchMode mode;
 	matchmakeStatus status;
@@ -288,22 +318,24 @@ void PacketManager::Matchmake(sf::Packet& data) {
 	{
 	case COMPETITIVE:
 		if (status == QUEUE_WAITING) {
-			std::cout << "Added to competitive matchmaking queue. Waiting for match..." << std::endl;
+			std::cout << "Waiting for competitive match..." << std::endl;
 		}
 		else {
-			std::cout << "Competitive match found. Opening UDP socket..." << std::endl;
+			std::cout << "Competitive match found." << std::endl;
 			matchStarted = true;
 		}
 		break;
+
 	case NON_COMPETITIVE:
 		if(status == QUEUE_WAITING) {
-			std::cout << "Added to non-competitive matchmaking queue. Waiting for match..." << std::endl;
+			std::cout << "Waiting for non-competitive match..." << std::endl;
 		}
 		else {
-			std::cout << "Non-competitive match found. Opening UDP socket..." << std::endl;
+			std::cout << "Non-competitive match found." << std::endl;
 			matchStarted = true;
 		}
 		break;
+
 	default:
 		std::cout << "Unknown matchmaking mode" << std::endl;
 		break;
@@ -325,6 +357,7 @@ void PacketManager::Matchmake(sf::Packet& data) {
 	}
 }
 
+// Respuesta del servidor a la solicitud de mapa, actualiza el mapa local si es necesario y guarda la nueva version
 void PacketManager::HandleMapRequest(sf::Packet& packet) {
 	short requestTypeValue;
 	packet >> requestTypeValue;
@@ -351,6 +384,7 @@ void PacketManager::HandleMapRequest(sf::Packet& packet) {
 	}
 }
 
+// Procesa datos de movimiento recibidos del servidor, si es local lo guarda para validacion, si es de un jugador online lo guarda para interpolacion
 void PacketManager::HandleMovement(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
 	movementPacketType movementType;
 	std::memcpy(&movementType, buffer + readPos, sizeof(movementType));
@@ -393,12 +427,9 @@ void PacketManager::HandleMovement(const char* buffer, std::size_t receivedSize,
 	}
 }
 
+// Procesa datos de actualizacion de vida y salud del enemigo recibidos del servidor, los almacena para actualizar el estado del enemigo en el juego
 void PacketManager::HandleEnemyHealthUpdate(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
 	EnemyHealthUpdate update;
-
-	if (readPos + sizeof(update.playerId) + sizeof(update.lives) + sizeof(update.health) > receivedSize) {
-		return;
-	}
 
 	std::memcpy(&update.playerId, buffer + readPos, sizeof(update.playerId));
 	readPos += sizeof(update.playerId);
@@ -412,7 +443,7 @@ void PacketManager::HandleEnemyHealthUpdate(const char* buffer, std::size_t rece
 	pendingEnemyHealthUpdates.push(update);
 }
 
-// Envia solicitud de login al servidor con usuario y contrase�a
+// Envia solicitud de login al servidor con usuario y contrasenya
 void PacketManager::SendLoginRequest(const std::string& username, const std::string& password) {
 	sf::Packet packet;
 	packetType type = LOGIN;
@@ -425,7 +456,7 @@ void PacketManager::SendLoginRequest(const std::string& username, const std::str
 	}
 }
 
-// Env�a solicitud de registro al servidor con usuario y contrase�a
+// Envia solicitud de registro al servidor con usuario y contrasenya
 void PacketManager::SendRegisterRequest(const std::string& username, const std::string& password) {
 	sf::Packet packet;
 	packetType type = REGISTER;
@@ -438,8 +469,8 @@ void PacketManager::SendRegisterRequest(const std::string& username, const std::
 	}
 }
 
-void PacketManager::SendMatchmakeRequest(matchMode mode)
-{
+// Envia solicitud de matchmaking al servidor con el modo de juego seleccionado
+void PacketManager::SendMatchmakeRequest(matchMode mode) {
 	hideAllButtons = true;
 
 	sf::Packet packet;
@@ -456,6 +487,7 @@ void PacketManager::SendMatchmakeRequest(matchMode mode)
 	}
 }
 
+// Envia solicitud de mapa al servidor con la version del mapa local para comprobar si es necesario actualizarlo
 void PacketManager::RequestMap() {
 	unsigned short localVersion = LoadLocalMapVersion();
 
@@ -467,6 +499,7 @@ void PacketManager::RequestMap() {
 	}
 }
 
+// Carga la version del mapa local desde un archivo de texto
 unsigned short PacketManager::LoadLocalMapVersion() {
 	std::ifstream file("resources/Maps/map_version.txt");
 
@@ -479,6 +512,7 @@ unsigned short PacketManager::LoadLocalMapVersion() {
 	return version;
 }
 
+// Guarda el mapa en local, sobreescribiendo el mapa anterior
 void PacketManager::SaveLocalMap(const std::string& mapContent) {
 	std::ofstream file("resources/Maps/Map.txt");
 
@@ -490,6 +524,7 @@ void PacketManager::SaveLocalMap(const std::string& mapContent) {
 	file << mapContent;
 }
 
+// Guarda la verison del mapa i sobreescribe la version anterior
 void PacketManager::SaveLocalMapVersion(unsigned short version) {
 	std::ofstream file("resources/Maps/map_version.txt");
 
@@ -514,7 +549,7 @@ void PacketManager::GetRanking(sf::Packet& data)
 	}
 }
 
-// Env�a solicitud de ranking al servidor con el nombre del usuario actual
+// Envia solicitud de ranking al servidor con el nombre del usuario actual
 void PacketManager::RankingRequest() {
 	sf::Packet packet;
 	packetType type = RANKING;
@@ -528,19 +563,20 @@ void PacketManager::RankingRequest() {
 	}
 }
 
+// Envio datos movimiento al servidor
 void PacketManager::SendMovement(float x, float y, unsigned int movementID) {
-	char buffer[1024];
+	char buffer[BUFFER_SIZE];
 	std::size_t bufferDataSize = 0;
 
 	udpPacketType packetType = udpPacketType::MOVEMENT;
 	movementPacketType movementType = movementPacketType::SEND_RAW_MOVEMENT;
-	unsigned char flags = 0;
-
-	std::memcpy(buffer + bufferDataSize, &packetType, sizeof(packetType));
-	bufferDataSize += sizeof(packetType);
+	uint8_t flags = NORMAL_PACKET;
 
 	std::memcpy(buffer + bufferDataSize, &flags, sizeof(flags));
 	bufferDataSize += sizeof(flags);
+
+	std::memcpy(buffer + bufferDataSize, &packetType, sizeof(packetType));
+	bufferDataSize += sizeof(packetType);
 
 	std::memcpy(buffer + bufferDataSize, &myIndex, sizeof(myIndex));
 	bufferDataSize += sizeof(myIndex);
@@ -562,31 +598,34 @@ void PacketManager::SendMovement(float x, float y, unsigned int movementID) {
 	}
 }
 
+// Devuelve el siguiente movimiento online pendiente de procesar, lo elimina de la cola de movimientos pendientes
 PacketManager::OnlineMovement PacketManager::PopPendingOnlineMovement() {
 	OnlineMovement movement = pendingOnlineMovements.front();
 	pendingOnlineMovements.pop();
 	return movement;
 }
 
+// Devuelve la siguiente validacion local pendiente de procesar, lo elimina de la cola de validaciones pendientes
 PacketManager::LocalValidation PacketManager::PopPendingLocalValidation() {
 	LocalValidation validation = pendingLocalValidations.front();
 	pendingLocalValidations.pop();
 	return validation;
 }
 
+// Envia actualizacion de vida y salud del jugador al servidor
 void PacketManager::SendLifeHealthUpdate(short lives, short health) {
-	char buffer[1024];
+	char buffer[BUFFER_SIZE];
 	std::size_t size = 0;
 
 	udpPacketType packetType = PLAYER_HEALTH_UPDATE;
-	unsigned char flags = 0;
+	uint8_t flags = NORMAL_PACKET;
 	unsigned short clientId = myIndex;
-
-	std::memcpy(buffer + size, &packetType, sizeof(packetType));
-	size += sizeof(packetType);
 
 	std::memcpy(buffer + size, &flags, sizeof(flags));
 	size += sizeof(flags);
+
+	std::memcpy(buffer + size, &packetType, sizeof(packetType));
+	size += sizeof(packetType);
 
 	std::memcpy(buffer + size, &clientId, sizeof(clientId));
 	size += sizeof(clientId);
@@ -602,26 +641,28 @@ void PacketManager::SendLifeHealthUpdate(short lives, short health) {
 	}
 }
 
+// Devuelve la siguiente actualizacion de vida y salud del enemigo pendiente de procesar, lo elimina de la cola de actualizaciones pendientes
 PacketManager::EnemyHealthUpdate PacketManager::PopPendingEnemyHealthUpdate() {
 	EnemyHealthUpdate update = pendingEnemyHealthUpdates.front();
 	pendingEnemyHealthUpdates.pop();
 	return update;
 }
 
+// Envia un ping al servidor, actualiza el estado de espera de pong y el tiempo del ultimo ping enviado
 void PacketManager::SendPing() {
-	char buffer[1024];
+	char buffer[BUFFER_SIZE];
 	std::size_t size = 0;
 
 	udpPacketType packetType = PING;
-	unsigned char flags = 0;
+	uint8_t flags = NORMAL_PACKET;
 	unsigned short clientId = myIndex;
 	unsigned int pingId = lastPingId + 1;
 
-	std::memcpy(buffer + size, &packetType, sizeof(packetType));
-	size += sizeof(packetType);
-
 	std::memcpy(buffer + size, &flags, sizeof(flags));
 	size += sizeof(flags);
+
+	std::memcpy(buffer + size, &packetType, sizeof(packetType));
+	size += sizeof(packetType);
 
 	std::memcpy(buffer + size, &clientId, sizeof(clientId));
 	size += sizeof(clientId);
@@ -636,19 +677,20 @@ void PacketManager::SendPing() {
 	}
 }
 
+// Envia un pong al servidor en respuesta a un ping, incluye el ID del ping para que el servidor pueda identificar a que ping responde
 void PacketManager::SendPong(unsigned int pingId) {
-	char buffer[1024];
+	char buffer[BUFFER_SIZE];
 	std::size_t size = 0;
 
 	udpPacketType packetType = PONG;
-	unsigned char flags = 0;
+	uint8_t flags = NORMAL_PACKET;
 	unsigned short clientId = myIndex;
-
-	std::memcpy(buffer + size, &packetType, sizeof(packetType));
-	size += sizeof(packetType);
 
 	std::memcpy(buffer + size, &flags, sizeof(flags));
 	size += sizeof(flags);
+
+	std::memcpy(buffer + size, &packetType, sizeof(packetType));
+	size += sizeof(packetType);
 
 	std::memcpy(buffer + size, &clientId, sizeof(clientId));
 	size += sizeof(clientId);
@@ -661,6 +703,7 @@ void PacketManager::SendPong(unsigned int pingId) {
 	}
 }
 
+// Procesa un ping recibido del servidor, si el ping es para este cliente responde con un pong, actualiza el tiempo del ultimo paquete UDP recibido y el estado de espera de pong
 void PacketManager::HandlePing(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
 	unsigned short clientId = 0;
 	unsigned int pingId = 0;
@@ -680,6 +723,8 @@ void PacketManager::HandlePing(const char* buffer, std::size_t receivedSize, std
 	SendPong(pingId);
 }
 
+// Procesa un pong recibido del servidor, si el pong es para este cliente y corresponde al ultimo ping enviado 
+// actualiza el tiempo del ultimo paquete UDP recibido y el estado de espera de pong
 void PacketManager::HandlePong(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
 	unsigned short clientId = 0;
 	unsigned int pingId = 0;
@@ -697,11 +742,9 @@ void PacketManager::HandlePong(const char* buffer, std::size_t receivedSize, std
 	waitingPong = false;
 }
 
+// Actualiza el sistema de ping, si ha pasado demasiado tiempo desde el ultimo lo desconecta, 
+// si ha pasado un tiempo desde el ultimo ping enviado y no se ha recibido un pong se envia otro ping
 void PacketManager::UpdatePingSystem() {
-	const float PING_THRESHOLD = 1.0f;
-	const float PING_INTERVAL = 0.5f;
-	const float TIMEOUT = 3.0f;
-
 	float currentTime = udpClock.getElapsedTime().asSeconds();
 	float timeSinceLastPacket = currentTime - lastUdpPacketTime;
 
@@ -709,8 +752,8 @@ void PacketManager::UpdatePingSystem() {
 		std::cout << "UDP server timeout" << std::endl;
 		udpConnected = false;
 		waitingPong = false;
-		processedShootIds.clear();
-	pendingShootConfirmedCount = 0;
+		processedCriticalIds.clear();
+		pendingShootConfirmedCount = 0;
 		udpSocket.unbind();
 		SM.SetNextScene("Lobby");
 		return;
@@ -723,6 +766,7 @@ void PacketManager::UpdatePingSystem() {
 	}
 }
 
+// Procesa la desconexion de un jugador, actualiza el estado de conexion UDP, limpia las colas de paquetes pendientes y vuelve al lobby
 void PacketManager::HandleDisconnectedPlayer(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
 	unsigned short disconnectedClientId = 0;
 
@@ -735,13 +779,14 @@ void PacketManager::HandleDisconnectedPlayer(const char* buffer, std::size_t rec
 
 	udpConnected = false;
 	waitingPong = false;
-	processedShootIds.clear();
+	processedCriticalIds.clear();
 	pendingShootConfirmedCount = 0;
 	udpSocket.unbind();
 
 	SM.SetNextScene("Lobby");
 }
 
+// Procesa una advertencia de irregularidad recibida del servidor
 void PacketManager::HandleIrregularityWarning(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
 	unsigned short clientId = 0;
 	unsigned int movementID = 0;
@@ -774,18 +819,19 @@ void PacketManager::HandleIrregularityWarning(const char* buffer, std::size_t re
 	std::cout << "Irregularidad detectada: " << irregularityCount << "/3" << std::endl;
 }
 
+// Envia un paquete de hit
 void PacketManager::SendHit() {
-	char buffer[1024];
+	char buffer[BUFFER_SIZE];
 	std::size_t size = 0;
 
 	udpPacketType packetType = HIT;
-	unsigned char flags = static_cast<unsigned char>(urgentBitmask);
-
-	std::memcpy(buffer + size, &packetType, sizeof(packetType));
-	size += sizeof(packetType);
+	uint8_t flags = URGENT_PACKET | CRITIC_PACKET;
 
 	std::memcpy(buffer + size, &flags, sizeof(flags));
 	size += sizeof(flags);
+
+	std::memcpy(buffer + size, &packetType, sizeof(packetType));
+	size += sizeof(packetType);
 
 	std::memcpy(buffer + size, &myIndex, sizeof(myIndex));
 	size += sizeof(myIndex);
@@ -795,6 +841,7 @@ void PacketManager::SendHit() {
 	}
 }
 
+// Procesa un paquete de hit recibido
 void PacketManager::HandleHit(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
 	unsigned short targetPlayerId = 0;
 	std::memcpy(&targetPlayerId, buffer + readPos, sizeof(targetPlayerId));
@@ -804,26 +851,26 @@ void PacketManager::HandleHit(const char* buffer, std::size_t receivedSize, std:
 	pendingHitConfirmations.push(hitData);
 }
 
+// Devuelve la siguiente confirmacion de hit pendiente de procesar, lo elimina de la cola de confirmaciones pendientes
 PacketManager::HitConfirmedData PacketManager::PopPendingHitConfirmation() {
 	HitConfirmedData hitData = pendingHitConfirmations.front();
 	pendingHitConfirmations.pop();
 	return hitData;
 }
 
-void PacketManager::SendTaunt()
-{
-	char buffer[1024];
+// Envia un paquete de taunt
+void PacketManager::SendTaunt() {
+	char buffer[BUFFER_SIZE];
 	std::size_t size = 0;
 
 	udpPacketType packetType = TAUNT;
-	unsigned char flags = 0;
-	unsigned int tauntId = 0;
-
-	std::memcpy(buffer + size, &packetType, sizeof(packetType));
-	size += sizeof(packetType);
+	uint8_t flags = URGENT_PACKET | CRITIC_PACKET;
 
 	std::memcpy(buffer + size, &flags, sizeof(flags));
 	size += sizeof(flags);
+
+	std::memcpy(buffer + size, &packetType, sizeof(packetType));
+	size += sizeof(packetType);
 
 	std::memcpy(buffer + size, &myIndex, sizeof(myIndex));
 	size += sizeof(myIndex);
@@ -834,39 +881,39 @@ void PacketManager::SendTaunt()
 	if (udpSocket.send(buffer, size, UDP_SERVER_IP, UDP_SERVER_PORT) != sf::Socket::Status::Done) {
 		std::cout << "Failed to send taunt packet" << std::endl;
 	}
+
+	tauntId++;
 }
 
-void PacketManager::HandleTaunt(const char* buffer, std::size_t receivedSize, std::size_t readPos)
-{
-	unsigned short clientId = 0;
-	unsigned int tauntId = 0;
+// Procesa un paquete de taunt recibido, si el taunt es de otro jugador reproduce el sonido y aumenta el contador de taunts pendientes
+void PacketManager::HandleTaunt(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
+	unsigned short clientIdReceived = 0;
+	unsigned int tauntIdReceived = 0;
 
-	std::memcpy(&clientId, buffer + readPos, sizeof(clientId));
-	readPos += sizeof(clientId);
+	std::memcpy(&clientIdReceived, buffer + readPos, sizeof(clientIdReceived));
+	readPos += sizeof(clientIdReceived);
+	std::memcpy(&tauntIdReceived, buffer + readPos, sizeof(tauntIdReceived));
+	readPos += sizeof(tauntIdReceived);
 
-	std::memcpy(&tauntId, buffer + readPos, sizeof(tauntId));
-	readPos += sizeof(tauntId);
+	if (clientIdReceived == myIndex) return;
 
-	if (clientId == myIndex) {
-		return;
-	}
-
-	AUDIO->PlayClip("taunt", 0, 128);
+	AUDIO->PlayClip("taunt", 0, 35);
 	pendingTauntCount++;
 }
 
+// Envia un paquete de shoot con la posicion de spawn y la direccion del disparo
 void PacketManager::SendShoot(float spawnX, float spawnY, float directionX, float directionY) {
-	char buffer[1024];
+	char buffer[BUFFER_SIZE];
 	std::size_t size = 0;
 
 	udpPacketType packetType = SHOOT;
-	unsigned char flags = static_cast<unsigned char>(urgentBitmask | criticBitmask);
-
-	std::memcpy(buffer + size, &packetType, sizeof(packetType));
-	size += sizeof(packetType);
+	uint8_t flags = URGENT_PACKET | CRITIC_PACKET;
 
 	std::memcpy(buffer + size, &flags, sizeof(flags));
 	size += sizeof(flags);
+
+	std::memcpy(buffer + size, &packetType, sizeof(packetType));
+	size += sizeof(packetType);
 
 	std::memcpy(buffer + size, &myIndex, sizeof(myIndex));
 	size += sizeof(myIndex);
@@ -876,25 +923,14 @@ void PacketManager::SendShoot(float spawnX, float spawnY, float directionX, floa
 	}
 }
 
+// Procesa un paquete de shoot recibido, si el disparo es de otro jugador lo almacena para crear el proyectil en el juego
 void PacketManager::HandleShoot(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
 	unsigned short shooterNetworkId = 0;
-	unsigned short criticalPacketId = 0;
-
-	if (readPos + sizeof(shooterNetworkId) + sizeof(criticalPacketId) > receivedSize)
-		return;
 
 	std::memcpy(&shooterNetworkId, buffer + readPos, sizeof(shooterNetworkId));
 	readPos += sizeof(shooterNetworkId);
 
-	std::memcpy(&criticalPacketId, buffer + readPos, sizeof(criticalPacketId));
-	readPos += sizeof(criticalPacketId);
-
-	SendShootAck(criticalPacketId);
-
 	if (shooterNetworkId == myIndex) return;
-
-	if (processedShootIds.count(criticalPacketId) > 0) return;
-	processedShootIds.insert(criticalPacketId);
 
 	ShootData shootData;
 	shootData.shooterNetworkId = shooterNetworkId;
@@ -902,32 +938,19 @@ void PacketManager::HandleShoot(const char* buffer, std::size_t receivedSize, st
 	pendingShoots.push(shootData);
 }
 
-void PacketManager::HandleShootConfirmed(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
-	unsigned short shooterNetworkId = 0;
-
-	if (readPos + sizeof(shooterNetworkId) > receivedSize)
-		return;
-
-	std::memcpy(&shooterNetworkId, buffer + readPos, sizeof(shooterNetworkId));
-	readPos += sizeof(shooterNetworkId);
-
-	if (shooterNetworkId != myIndex) return;
-
-	pendingShootConfirmedCount++;
-}
-
-void PacketManager::SendShootAck(unsigned short criticalPacketId) {
-	char buffer[1024];
+// Envia un paquete de confirmacion de un paquete critico recibido, incluye el ID del paquete critico para que el servidor sepa que paquete se esta confirmando
+void PacketManager::SendCriticalAck(unsigned short criticalPacketId) {
+	char buffer[BUFFER_SIZE];
 	std::size_t size = 0;
 
-	udpPacketType packetType = SHOOT_ACK;
-	unsigned char flags = static_cast<unsigned char>(urgentBitmask);
-
-	std::memcpy(buffer + size, &packetType, sizeof(packetType));
-	size += sizeof(packetType);
+	udpPacketType packetType = CRITICAL_ACK;
+	uint8_t flags = URGENT_PACKET;
 
 	std::memcpy(buffer + size, &flags, sizeof(flags));
 	size += sizeof(flags);
+
+	std::memcpy(buffer + size, &packetType, sizeof(packetType));
+	size += sizeof(packetType);
 
 	std::memcpy(buffer + size, &myIndex, sizeof(myIndex));
 	size += sizeof(myIndex);
@@ -936,23 +959,49 @@ void PacketManager::SendShootAck(unsigned short criticalPacketId) {
 	size += sizeof(criticalPacketId);
 
 	if (udpSocket.send(buffer, size, UDP_SERVER_IP, UDP_SERVER_PORT) != sf::Socket::Status::Done) {
-		std::cerr << "Failed to send SHOOT_ACK packet" << std::endl;
+		std::cerr << "Failed to send CRITICAL_ACK packet" << std::endl;
 	}
 }
 
+// Procesa un paquete de confirmacion de un paquete critico recibido, si la confirmacion es para este cliente y 
+// corresponde a un paquete critico pendiente lo procesa segun el tipo de paquete critico confirmado
+void PacketManager::HandleCriticalConfirmed(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
+	udpPacketType originalPacketType;
+	unsigned short senderClientId = 0;
+
+	if (readPos + sizeof(originalPacketType) + sizeof(senderClientId) > receivedSize)
+		return;
+
+	std::memcpy(&originalPacketType, buffer + readPos, sizeof(originalPacketType));
+	readPos += sizeof(originalPacketType);
+
+	std::memcpy(&senderClientId, buffer + readPos, sizeof(senderClientId));
+	readPos += sizeof(senderClientId);
+
+	if (senderClientId != myIndex)
+		return;
+
+	switch (originalPacketType) {
+	case SHOOT:
+		pendingShootConfirmedCount++;
+		break;
+	default:
+		break;
+	}
+}
+
+// Devuelve el siguiente disparo pendiente de procesar, lo elimina de la cola de disparos pendientes
 PacketManager::ShootData PacketManager::PopPendingShoot() {
 	ShootData shootData = pendingShoots.front();
 	pendingShoots.pop();
 	return shootData;
 }
 
+// Procesa un paquete de finalizacion de partida recibido, actualiza el resultado y motivo de finalizacion de la ultima partida, 
+// el estado de recepcion de la finalizacion de partida y desconecta del servidor UDP
 void PacketManager::HandleMatchFinished(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
 	unsigned short resultValue = 0;
 	unsigned short reasonValue = 0;
-
-	if (readPos + sizeof(resultValue) + sizeof(reasonValue) > receivedSize) {
-		return;
-	}
 
 	std::memcpy(&resultValue, buffer + readPos, sizeof(resultValue));
 	readPos += sizeof(resultValue);
@@ -983,7 +1032,7 @@ void PacketManager::HandleMatchFinished(const char* buffer, std::size_t received
 
 	udpConnected = false;
 	waitingPong = false;
-	processedShootIds.clear();
+	processedCriticalIds.clear();
 	pendingShootConfirmedCount = 0;
 	udpSocket.unbind();
 }

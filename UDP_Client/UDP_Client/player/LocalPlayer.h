@@ -26,7 +26,7 @@ private:
 	bool defeated = false;
 	bool defeatSent = false;
 
-	bool pendingHealthDebugPrint = false;
+	bool healthDebugPrint = false;
 
 public:
 	LocalPlayer() = default;
@@ -55,5 +55,6 @@ public:
 	inline short GetMaxHealthPoints() const { return maxHealthPoints; }
 	inline bool HasLostMatch() const { return defeated; }
 
-	bool ConsumePendingHealthDebugPrint();
+	inline bool GetHealthDebugPrint() const { return healthDebugPrint; }
+	inline void SetHealthDebugPrint	(bool value) { healthDebugPrint = value; }
 };

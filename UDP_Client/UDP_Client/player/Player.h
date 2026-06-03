@@ -25,6 +25,7 @@ protected:
 	bool lookingRight = true;
 	bool isGrounded = false;
 	float moveSpeed = 300.0f;
+	float moveSpeedVertical = 1200.0f;
 	float jumpVelocity = -1050.0f;
 	float gravity = 2980.0f;
 
