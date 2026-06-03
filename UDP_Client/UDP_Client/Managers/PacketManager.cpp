@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <cstdint>
 #include "../Maps/TileMap.h"
 
 sf::Packet& operator <<(sf::Packet& packet, packetType type) {
@@ -534,13 +535,13 @@ void PacketManager::SendMovement(float x, float y, unsigned int movementID) {
 
 	udpPacketType packetType = udpPacketType::MOVEMENT;
 	movementPacketType movementType = movementPacketType::SEND_RAW_MOVEMENT;
-	unsigned char flags = 0;
-
-	std::memcpy(buffer + bufferDataSize, &packetType, sizeof(packetType));
-	bufferDataSize += sizeof(packetType);
+	char flags = 0;
 
 	std::memcpy(buffer + bufferDataSize, &flags, sizeof(flags));
 	bufferDataSize += sizeof(flags);
+
+	std::memcpy(buffer + bufferDataSize, &packetType, sizeof(packetType));
+	bufferDataSize += sizeof(packetType);
 
 	std::memcpy(buffer + bufferDataSize, &myIndex, sizeof(myIndex));
 	bufferDataSize += sizeof(myIndex);
@@ -579,14 +580,14 @@ void PacketManager::SendLifeHealthUpdate(short lives, short health) {
 	std::size_t size = 0;
 
 	udpPacketType packetType = PLAYER_HEALTH_UPDATE;
-	unsigned char flags = 0;
+	char flags = 0;
 	unsigned short clientId = myIndex;
-
-	std::memcpy(buffer + size, &packetType, sizeof(packetType));
-	size += sizeof(packetType);
 
 	std::memcpy(buffer + size, &flags, sizeof(flags));
 	size += sizeof(flags);
+
+	std::memcpy(buffer + size, &packetType, sizeof(packetType));
+	size += sizeof(packetType);
 
 	std::memcpy(buffer + size, &clientId, sizeof(clientId));
 	size += sizeof(clientId);
@@ -613,15 +614,15 @@ void PacketManager::SendPing() {
 	std::size_t size = 0;
 
 	udpPacketType packetType = PING;
-	unsigned char flags = 0;
+	char flags = 0;
 	unsigned short clientId = myIndex;
 	unsigned int pingId = lastPingId + 1;
 
-	std::memcpy(buffer + size, &packetType, sizeof(packetType));
-	size += sizeof(packetType);
-
 	std::memcpy(buffer + size, &flags, sizeof(flags));
 	size += sizeof(flags);
+
+	std::memcpy(buffer + size, &packetType, sizeof(packetType));
+	size += sizeof(packetType);
 
 	std::memcpy(buffer + size, &clientId, sizeof(clientId));
 	size += sizeof(clientId);
@@ -641,14 +642,14 @@ void PacketManager::SendPong(unsigned int pingId) {
 	std::size_t size = 0;
 
 	udpPacketType packetType = PONG;
-	unsigned char flags = 0;
+	char flags = 0;
 	unsigned short clientId = myIndex;
-
-	std::memcpy(buffer + size, &packetType, sizeof(packetType));
-	size += sizeof(packetType);
 
 	std::memcpy(buffer + size, &flags, sizeof(flags));
 	size += sizeof(flags);
+
+	std::memcpy(buffer + size, &packetType, sizeof(packetType));
+	size += sizeof(packetType);
 
 	std::memcpy(buffer + size, &clientId, sizeof(clientId));
 	size += sizeof(clientId);
@@ -779,13 +780,13 @@ void PacketManager::SendHit() {
 	std::size_t size = 0;
 
 	udpPacketType packetType = HIT;
-	unsigned char flags = static_cast<unsigned char>(urgentBitmask);
-
-	std::memcpy(buffer + size, &packetType, sizeof(packetType));
-	size += sizeof(packetType);
+	uint8_t flags = URGENT_PACKET;
 
 	std::memcpy(buffer + size, &flags, sizeof(flags));
 	size += sizeof(flags);
+
+	std::memcpy(buffer + size, &packetType, sizeof(packetType));
+	size += sizeof(packetType);
 
 	std::memcpy(buffer + size, &myIndex, sizeof(myIndex));
 	size += sizeof(myIndex);
@@ -816,14 +817,14 @@ void PacketManager::SendTaunt()
 	std::size_t size = 0;
 
 	udpPacketType packetType = TAUNT;
-	unsigned char flags = 0;
+	char flags = 0;
 	unsigned int tauntId = 0;
-
-	std::memcpy(buffer + size, &packetType, sizeof(packetType));
-	size += sizeof(packetType);
 
 	std::memcpy(buffer + size, &flags, sizeof(flags));
 	size += sizeof(flags);
+
+	std::memcpy(buffer + size, &packetType, sizeof(packetType));
+	size += sizeof(packetType);
 
 	std::memcpy(buffer + size, &myIndex, sizeof(myIndex));
 	size += sizeof(myIndex);
@@ -860,13 +861,13 @@ void PacketManager::SendShoot(float spawnX, float spawnY, float directionX, floa
 	std::size_t size = 0;
 
 	udpPacketType packetType = SHOOT;
-	unsigned char flags = static_cast<unsigned char>(urgentBitmask | criticBitmask);
-
-	std::memcpy(buffer + size, &packetType, sizeof(packetType));
-	size += sizeof(packetType);
+	uint8_t flags = URGENT_PACKET | CRITIC_PACKET;
 
 	std::memcpy(buffer + size, &flags, sizeof(flags));
 	size += sizeof(flags);
+
+	std::memcpy(buffer + size, &packetType, sizeof(packetType));
+	size += sizeof(packetType);
 
 	std::memcpy(buffer + size, &myIndex, sizeof(myIndex));
 	size += sizeof(myIndex);
@@ -921,13 +922,13 @@ void PacketManager::SendShootAck(unsigned short criticalPacketId) {
 	std::size_t size = 0;
 
 	udpPacketType packetType = SHOOT_ACK;
-	unsigned char flags = static_cast<unsigned char>(urgentBitmask);
-
-	std::memcpy(buffer + size, &packetType, sizeof(packetType));
-	size += sizeof(packetType);
+	uint8_t flags = URGENT_PACKET;
 
 	std::memcpy(buffer + size, &flags, sizeof(flags));
 	size += sizeof(flags);
+
+	std::memcpy(buffer + size, &packetType, sizeof(packetType));
+	size += sizeof(packetType);
 
 	std::memcpy(buffer + size, &myIndex, sizeof(myIndex));
 	size += sizeof(myIndex);

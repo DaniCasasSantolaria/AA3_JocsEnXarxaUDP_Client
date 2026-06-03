@@ -84,6 +84,10 @@ struct PlayerInfo {
     int score = 0;
 };
 
+#define NORMAL_PACKET 0b00000000
+#define URGENT_PACKET 0b00000001
+#define CRITIC_PACKET 0b00000010
+
 
 #define MAX_PLAYERS 4
 
@@ -118,8 +122,6 @@ private:
     const sf::IpAddress UDP_SERVER_IP = sf::IpAddress(10, 8, 0, 2); // IP
     sf::UdpSocket udpSocket;
     bool udpConnected = false;
-    unsigned int urgentBitmask = 00000001;
-	unsigned int criticBitmask = 00000010;
 
 
     // Estado de conexion
