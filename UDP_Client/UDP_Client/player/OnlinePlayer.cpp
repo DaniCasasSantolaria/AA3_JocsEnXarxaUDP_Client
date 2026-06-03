@@ -115,4 +115,6 @@ void OnlinePlayer::UpdateAnimationFromMovement(const Vector2& oldPosition, const
 void OnlinePlayer::Update() {
 	Move();
 	ImageObject::Update();
+	UpdateTauntAnimation();
+	UpdateHitAnimation();
 }

@@ -159,6 +159,10 @@ void PacketManager::Update() {
 				HandleHit(buffer, receivedSize, readPos);
 				break;
 
+			case TAUNT:
+				HandleTaunt(buffer, receivedSize, readPos);
+				break;
+
 			case PLAYER_HEALTH_UPDATE:
 				HandleEnemyHealthUpdate(buffer, receivedSize, readPos);
 				break;
@@ -530,9 +534,13 @@ void PacketManager::SendMovement(float x, float y, unsigned int movementID) {
 
 	udpPacketType packetType = udpPacketType::MOVEMENT;
 	movementPacketType movementType = movementPacketType::SEND_RAW_MOVEMENT;
+	unsigned char flags = 0;
 
 	std::memcpy(buffer + bufferDataSize, &packetType, sizeof(packetType));
 	bufferDataSize += sizeof(packetType);
+
+	std::memcpy(buffer + bufferDataSize, &flags, sizeof(flags));
+	bufferDataSize += sizeof(flags);
 
 	std::memcpy(buffer + bufferDataSize, &myIndex, sizeof(myIndex));
 	bufferDataSize += sizeof(myIndex);
@@ -571,10 +579,14 @@ void PacketManager::SendLifeHealthUpdate(short lives, short health) {
 	std::size_t size = 0;
 
 	udpPacketType packetType = PLAYER_HEALTH_UPDATE;
+	unsigned char flags = 0;
 	unsigned short clientId = myIndex;
 
 	std::memcpy(buffer + size, &packetType, sizeof(packetType));
 	size += sizeof(packetType);
+
+	std::memcpy(buffer + size, &flags, sizeof(flags));
+	size += sizeof(flags);
 
 	std::memcpy(buffer + size, &clientId, sizeof(clientId));
 	size += sizeof(clientId);
@@ -601,11 +613,15 @@ void PacketManager::SendPing() {
 	std::size_t size = 0;
 
 	udpPacketType packetType = PING;
+	unsigned char flags = 0;
 	unsigned short clientId = myIndex;
 	unsigned int pingId = lastPingId + 1;
 
 	std::memcpy(buffer + size, &packetType, sizeof(packetType));
 	size += sizeof(packetType);
+
+	std::memcpy(buffer + size, &flags, sizeof(flags));
+	size += sizeof(flags);
 
 	std::memcpy(buffer + size, &clientId, sizeof(clientId));
 	size += sizeof(clientId);
@@ -625,10 +641,14 @@ void PacketManager::SendPong(unsigned int pingId) {
 	std::size_t size = 0;
 
 	udpPacketType packetType = PONG;
+	unsigned char flags = 0;
 	unsigned short clientId = myIndex;
 
 	std::memcpy(buffer + size, &packetType, sizeof(packetType));
 	size += sizeof(packetType);
+
+	std::memcpy(buffer + size, &flags, sizeof(flags));
+	size += sizeof(flags);
 
 	std::memcpy(buffer + size, &clientId, sizeof(clientId));
 	size += sizeof(clientId);
@@ -759,8 +779,13 @@ void PacketManager::SendHit() {
 	std::size_t size = 0;
 
 	udpPacketType packetType = HIT;
+	unsigned char flags = static_cast<unsigned char>(urgentBitmask);
+
 	std::memcpy(buffer + size, &packetType, sizeof(packetType));
 	size += sizeof(packetType);
+
+	std::memcpy(buffer + size, &flags, sizeof(flags));
+	size += sizeof(flags);
 
 	std::memcpy(buffer + size, &myIndex, sizeof(myIndex));
 	size += sizeof(myIndex);
@@ -785,31 +810,66 @@ PacketManager::HitConfirmedData PacketManager::PopPendingHitConfirmation() {
 	return hitData;
 }
 
+void PacketManager::SendTaunt()
+{
+	char buffer[1024];
+	std::size_t size = 0;
+
+	udpPacketType packetType = TAUNT;
+	unsigned char flags = 0;
+	unsigned int tauntId = 0;
+
+	std::memcpy(buffer + size, &packetType, sizeof(packetType));
+	size += sizeof(packetType);
+
+	std::memcpy(buffer + size, &flags, sizeof(flags));
+	size += sizeof(flags);
+
+	std::memcpy(buffer + size, &myIndex, sizeof(myIndex));
+	size += sizeof(myIndex);
+
+	std::memcpy(buffer + size, &tauntId, sizeof(tauntId));
+	size += sizeof(tauntId);
+
+	if (udpSocket.send(buffer, size, UDP_SERVER_IP, UDP_SERVER_PORT) != sf::Socket::Status::Done) {
+		std::cout << "Failed to send taunt packet" << std::endl;
+	}
+}
+
+void PacketManager::HandleTaunt(const char* buffer, std::size_t receivedSize, std::size_t readPos)
+{
+	unsigned short clientId = 0;
+	unsigned int tauntId = 0;
+
+	std::memcpy(&clientId, buffer + readPos, sizeof(clientId));
+	readPos += sizeof(clientId);
+
+	std::memcpy(&tauntId, buffer + readPos, sizeof(tauntId));
+	readPos += sizeof(tauntId);
+
+	if (clientId == myIndex) {
+		return;
+	}
+
+	AUDIO->PlayClip("taunt", 0, 128);
+	pendingTauntCount++;
+}
+
 void PacketManager::SendShoot(float spawnX, float spawnY, float directionX, float directionY) {
 	char buffer[1024];
 	std::size_t size = 0;
 
 	udpPacketType packetType = SHOOT;
+	unsigned char flags = static_cast<unsigned char>(urgentBitmask | criticBitmask);
+
 	std::memcpy(buffer + size, &packetType, sizeof(packetType));
 	size += sizeof(packetType);
 
+	std::memcpy(buffer + size, &flags, sizeof(flags));
+	size += sizeof(flags);
+
 	std::memcpy(buffer + size, &myIndex, sizeof(myIndex));
 	size += sizeof(myIndex);
-
-	std::memcpy(buffer + size, &urgentBitmask, sizeof(urgentBitmask));
-	size += sizeof(urgentBitmask);
-
-	std::memcpy(buffer + size, &directionX, sizeof(directionX));
-	size += sizeof(directionX);
-
-	std::memcpy(buffer + size, &directionY, sizeof(directionY));
-	size += sizeof(directionY);
-
-	std::memcpy(buffer + size, &spawnX, sizeof(spawnX));
-	size += sizeof(spawnX);
-
-	std::memcpy(buffer + size, &spawnY, sizeof(spawnY));
-	size += sizeof(spawnY);
 
 	if (udpSocket.send(buffer, size, UDP_SERVER_IP, UDP_SERVER_PORT) != sf::Socket::Status::Done) {
 		std::cerr << "Failed to send shoot packet" << std::endl;
@@ -861,8 +921,13 @@ void PacketManager::SendShootAck(unsigned short criticalPacketId) {
 	std::size_t size = 0;
 
 	udpPacketType packetType = SHOOT_ACK;
+	unsigned char flags = static_cast<unsigned char>(urgentBitmask);
+
 	std::memcpy(buffer + size, &packetType, sizeof(packetType));
 	size += sizeof(packetType);
+
+	std::memcpy(buffer + size, &flags, sizeof(flags));
+	size += sizeof(flags);
 
 	std::memcpy(buffer + size, &myIndex, sizeof(myIndex));
 	size += sizeof(myIndex);

@@ -3,6 +3,7 @@
 #include "../Managers/PacketManager.h"
 #include <SFML/Window/Keyboard.hpp>
 #include <cmath>
+#include "../Managers/TimeManager.h"
 
 void Player::OnCollisionEnter(Object* other) {
 	if (dynamic_cast<Bullet*>(other)) {
@@ -20,6 +21,14 @@ void Player::OnCollisionEnter(Object* other) {
 
 void Player::ChangeAnimation(PlayerState newState) {
 	if (currentState == newState) {
+		return;
+	}
+
+	if (isTaunting && newState != PlayerState::TAUNT) {
+		return;
+	}
+
+	if (isHitting && newState != PlayerState::HIT && newState != PlayerState::DEATH) {
 		return;
 	}
 
@@ -46,11 +55,77 @@ void Player::ChangeAnimation(PlayerState newState) {
 		break;
 
 	case PlayerState::HIT:
-		animatedRenderer->SetAnimation(4, 4);
+		animatedRenderer->SetAnimation(6, 4);
 		break;
+
 	case PlayerState::DEATH:
-		animatedRenderer->SetAnimation(5, 4);
+		animatedRenderer->SetAnimation(7, 4);
 		break;
+
+	case PlayerState::TAUNT:
+		animatedRenderer->SetAnimation(5, 8);
+		break;
+	}
+}
+
+void Player::StartTauntAnimation()
+{
+	isTaunting = true;
+	tauntTimer = tauntDuration;
+	ChangeAnimation(PlayerState::TAUNT);
+}
+
+void Player::UpdateTauntAnimation()
+{
+	if (!isTaunting) {
+		return;
+	}
+
+	tauntTimer -= TIME.GetDeltaTime();
+
+	if (tauntTimer <= 0.0f) {
+		isTaunting = false;
+
+		Vector2 velocity = physics->GetVelocity();
+
+		if (std::abs(velocity.x) > 0.1f) {
+			ChangeAnimation(PlayerState::MOVE);
+		}
+		else {
+			ChangeAnimation(PlayerState::IDLE);
+		}
+	}
+}
+
+void Player::StartHitAnimation()
+{
+	isTaunting = false;
+	isHitting = true;
+	hitTimer = hitDuration;
+
+	currentState = PlayerState::IDLE;
+	ChangeAnimation(PlayerState::HIT);
+}
+
+void Player::UpdateHitAnimation()
+{
+	if (!isHitting) {
+		return;
+	}
+
+	hitTimer -= TIME.GetDeltaTime();
+
+	if (hitTimer <= 0.0f) {
+		isHitting = false;
+
+		Vector2 velocity = physics->GetVelocity();
+
+		if (std::abs(velocity.x) > 0.1f) {
+			ChangeAnimation(PlayerState::MOVE);
+		}
+		else {
+			ChangeAnimation(PlayerState::IDLE);
+		}
 	}
 }
 
