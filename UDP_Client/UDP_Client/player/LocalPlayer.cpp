@@ -133,6 +133,7 @@ void LocalPlayer::Taunt()
 {
 	if (!Input.GetEvent(sf::Keyboard::Key::O, KeyState::DOWN)) return;
 
+	StartTauntAnimation();
 	AUDIO->PlayClip("taunt", 0, 128);
 	PM->SendTaunt();
 }
@@ -144,11 +145,14 @@ void LocalPlayer::Update() {
 		return;
 	}
 
+	Taunt();
 	Move();
 	ImageObject::Update();
+	UpdateTauntAnimation();
+	UpdateHitAnimation();
 	isGrounded = false;
 	Shoot();
-	Taunt();
+
 }
 
 void LocalPlayer::TrySendMovement() {
@@ -179,7 +183,7 @@ void LocalPlayer::RecieveDamage(short amount) {
 
 	currentHealthPoints -= amount;
 
-	ChangeAnimation(PlayerState::HIT);
+	StartHitAnimation();
 
 	if (currentHealthPoints > 0) {
 		PM->SendLifeHealthUpdate(currentLives, currentHealthPoints);
@@ -205,7 +209,7 @@ void LocalPlayer::RecieveDamage(short amount) {
 
 		lastTimeSentMovement = timeToSendMovement;
 
-		ChangeAnimation(PlayerState::IDLE);
+		StartHitAnimation();
 		return;
 	}
 

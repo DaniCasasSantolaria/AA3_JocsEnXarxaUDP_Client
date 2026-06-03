@@ -12,7 +12,8 @@ enum class PlayerState {
 	MOVE = 1,
 	ROLL = 2,
 	HIT = 3,
-	DEATH = 4
+	DEATH = 4,
+	TAUNT = 5
 };
 
 class Player : public ImageObject, public Movement, public Damageable, public Shooting{
@@ -26,6 +27,14 @@ protected:
 	float moveSpeed = 300.0f;
 	float jumpVelocity = -1050.0f;
 	float gravity = 2980.0f;
+
+	bool isTaunting = false;
+	float tauntTimer = 0.0f;
+	const float tauntDuration = 0.8f;
+
+	bool isHitting = false;
+	float hitTimer = 0.0f;
+	const float hitDuration = 0.4f;
 
 	PlayerState currentState = PlayerState::IDLE;
 public:
@@ -68,4 +77,10 @@ public:
 	inline short* GetScore() { return &score; }
 	inline void SetScore(int newScore) { score = newScore; }
 	inline bool IsLookingRight() const { return lookingRight; }
+
+	void StartTauntAnimation();
+	void UpdateTauntAnimation();
+
+	void StartHitAnimation();
+	void UpdateHitAnimation();
 };
