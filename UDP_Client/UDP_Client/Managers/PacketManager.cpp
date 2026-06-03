@@ -852,6 +852,7 @@ void PacketManager::HandleTaunt(const char* buffer, std::size_t receivedSize, st
 	}
 
 	AUDIO->PlayClip("taunt", 0, 128);
+	pendingTauntCount++;
 }
 
 void PacketManager::SendShoot(float spawnX, float spawnY, float directionX, float directionY) {

@@ -138,6 +138,9 @@ private:
     unsigned int lastPingId = 0;
     sf::Clock udpClock;
 
+    //TAUNT
+    unsigned short pendingTauntCount = 0;
+
     PacketManager() = default;
     PacketManager(PacketManager&) = delete;
     PacketManager& operator =(const PacketManager&) = delete;
@@ -238,6 +241,8 @@ public:
     //TAUNT
     void SendTaunt();
     void HandleTaunt(const char* buffer, std::size_t receivedSize, std::size_t readPos);
+    inline bool HasPendingTaunt() const { return pendingTauntCount > 0; }
+    inline void ConsumePendingTaunt() { if (pendingTauntCount > 0) pendingTauntCount--; }
 
     //SHOOT
     struct ShootData {

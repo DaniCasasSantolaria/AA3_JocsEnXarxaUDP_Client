@@ -171,6 +171,8 @@ void Gameplay::Update() {
             onlinePlayer->SetCurrentLives(healthUpdate.lives);
             onlinePlayer->SetCurrentHealthPoints(healthUpdate.health);
 
+            onlinePlayer->StartHitAnimation();
+
             PrintHealthDebug("YOU Hit the Enemy");
         }
     }
@@ -223,6 +225,14 @@ void Gameplay::Update() {
             Bullet* bullet = new Bullet("resources/bullet.png", bulletDirection, PM->GetMyIndex(), 600.0f);
             bullet->GetTransform()->position = spawnPosition;
             SPAWN.SpawnObject(bullet);
+        }
+    }
+
+    while (PM->HasPendingTaunt()) {
+        PM->ConsumePendingTaunt();
+
+        if (onlinePlayer != nullptr) {
+            onlinePlayer->StartTauntAnimation();
         }
     }
 
