@@ -6,6 +6,7 @@
 #include <SFML/Window/Keyboard.hpp>
 #include <cmath>
 
+// Movimiento local
 void LocalPlayer::ApplyMovementInput(float direction, bool jump, float dt) {
 	Vector2 velocity = physics->GetVelocity();
 
@@ -18,13 +19,17 @@ void LocalPlayer::ApplyMovementInput(float direction, bool jump, float dt) {
 
 	physics->SetVelocity(velocity);
 }
+
+// Reconciliacion de movimiento con el servidor
 void LocalPlayer::ApplyServerValidation(unsigned int movementId, const Vector2& serverPosition) {
+	// Ignoramos validaciones antiguas o repetidas
 	if (movementId <= lastValidatedMovementId) {
 		return;
 	}
 
 	lastValidatedMovementId = movementId;
 
+	// Buscamos que posicion habia predicho el cliente para ese mismo movimiento
 	Vector2 predictedPosition = serverPosition;
 	bool foundPrediction = false;
 
@@ -36,11 +41,12 @@ void LocalPlayer::ApplyServerValidation(unsigned int movementId, const Vector2& 
 		}
 	}
 
-	while (!pendingSentMovements.empty() &&
-		pendingSentMovements.front().movementId <= movementId) {
+	// Eliminamos los movimientos anteriores al actual
+	while (!pendingSentMovements.empty() && pendingSentMovements.front().movementId <= movementId) {
 		pendingSentMovements.erase(pendingSentMovements.begin());
 	}
 
+	// Si no econtramos prediccion, hacemos tp a la posicion del servidor
 	if (!foundPrediction) {
 		transform->position = serverPosition;
 		pendingSentMovements.clear();
@@ -50,11 +56,13 @@ void LocalPlayer::ApplyServerValidation(unsigned int movementId, const Vector2& 
 
 	Vector2 correction = serverPosition - predictedPosition;
 
+	// Se comparan las distancias. Parte matematica hecha con IA
 	float errorSquared = correction.x * correction.x + correction.y * correction.y;
 
 	const float minCorrection = 1.0f;
 	const float snapError = 20.0f;
 
+	// Si el error es demasiado grande, hacemos tp a la posicion del servidor
 	if (errorSquared > snapError * snapError) {
 		transform->position = serverPosition;
 		pendingSentMovements.clear();
@@ -62,11 +70,13 @@ void LocalPlayer::ApplyServerValidation(unsigned int movementId, const Vector2& 
 		return;
 	}
 
+	// Si el error es pequeno, corregimos suavemente desplazando la posicion actual
 	if (errorSquared > minCorrection * minCorrection) {
 		transform->position = transform->position + correction;
 	}
 }
 
+// Movimiento
 void LocalPlayer::Move() {
 	Vector2 velocity = physics->GetVelocity();
 
@@ -111,6 +121,7 @@ void LocalPlayer::Move() {
 	}
 }
 
+// Disparo
 void LocalPlayer::Shoot() {
 	if (!Input.GetEvent(sf::Keyboard::Key::P, KeyState::DOWN)) return;
 
@@ -129,6 +140,7 @@ void LocalPlayer::Shoot() {
 	PM->SendShoot(spawnPosition.x, spawnPosition.y, bulletDirection.x, bulletDirection.y);
 }
 
+// Burla
 void LocalPlayer::Taunt()
 {
 	if (!Input.GetEvent(sf::Keyboard::Key::O, KeyState::DOWN)) return;
@@ -144,7 +156,7 @@ void LocalPlayer::Update() {
 		ImageObject::Update();
 		return;
 	}
-
+	
 	Taunt();
 	Move();
 	ImageObject::Update();
@@ -155,14 +167,14 @@ void LocalPlayer::Update() {
 
 }
 
+// Enviamos la posicion al servidor cada cierto tiempo para que pueda validar el movimiento del cliente
 void LocalPlayer::TrySendMovement() {
-	if (defeated) {
-		return;
-	}
-
+	if (defeated) { return;	}
+	
 	lastTimeSentMovement += TIME.GetDeltaTime();
-
+ 
 	if (lastTimeSentMovement >= timeToSendMovement) {
+		// Guardamos el movimiento para poder compararlo luego con la validacion del servidor
 		SentMovement sentMovement;
 		sentMovement.movementId = currentMovementID;
 		sentMovement.position = transform->position;
@@ -176,6 +188,7 @@ void LocalPlayer::TrySendMovement() {
 	}
 }
 
+// Recibir daño
 void LocalPlayer::RecieveDamage(short amount) {
 	if (defeated || amount <= 0) {
 		return;
@@ -187,7 +200,7 @@ void LocalPlayer::RecieveDamage(short amount) {
 
 	if (currentHealthPoints > 0) {
 		PM->SendLifeHealthUpdate(currentLives, currentHealthPoints);
-		pendingHealthDebugPrint = true;
+		SetHealthDebugPrint(true);
 		return;
 	}
 
@@ -197,7 +210,7 @@ void LocalPlayer::RecieveDamage(short amount) {
 		currentHealthPoints = maxHealthPoints;
 
 		PM->SendLifeHealthUpdate(currentLives, currentHealthPoints);
-		pendingHealthDebugPrint = true;
+		SetHealthDebugPrint(true);
 
 		isGrounded = false;
 
@@ -225,13 +238,4 @@ void LocalPlayer::RecieveDamage(short amount) {
 
 bool LocalPlayer::IsDead() {
 	return defeated;
-}
-
-bool LocalPlayer::ConsumePendingHealthDebugPrint() {
-	if (!pendingHealthDebugPrint) {
-		return false;
-	}
-
-	pendingHealthDebugPrint = false;
-	return true;
 }

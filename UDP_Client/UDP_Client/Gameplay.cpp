@@ -50,6 +50,8 @@ void Gameplay::PrintHealthDebug(const char* reason) {
               << " Current Lives: " << localPlayer->GetCurrentLives() << std::endl
               << "Enemy HP: " << onlinePlayer->GetCurrentHealthPoints()
               << " Enemy Lives: " << onlinePlayer->GetCurrentLives() << std::endl;
+
+	localPlayer->SetHealthDebugPrint(false);
 }
 
 void Gameplay::Update() {
@@ -173,7 +175,7 @@ void Gameplay::Update() {
 
     Scene::Update();
 
-    if (localPlayer != nullptr && localPlayer->ConsumePendingHealthDebugPrint()) {
+    if (localPlayer != nullptr && localPlayer->GetHealthDebugPrint()) {
         PrintHealthDebug("YOU recive damage");
     }
 
