@@ -7,6 +7,7 @@
 #include <queue>
 #include <utility>
 #include <unordered_set>
+#include <cstdint>
 #include "../Vector2.h"
 #include "AudioManager.h"
 
@@ -92,6 +93,9 @@ struct PlayerInfo {
 #define MAX_PLAYERS 4
 
 #define BUFFER_SIZE 1024
+
+// Formato UDP: [uint8_t flags][udpPacketType packetType][payload]
+// flags: NORMAL_PACKET, URGENT_PACKET, CRITIC_PACKET o URGENT_PACKET | CRITIC_PACKET.
 
 sf::Packet& operator <<(sf::Packet& packet, packetType type);
 sf::Packet& operator <<(sf::Packet& packet, authResult result);

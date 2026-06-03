@@ -141,6 +141,10 @@ void PacketManager::Update() {
 		while (udpSocket.receive(buffer, sizeof(buffer), receivedSize, senderIP, senderPort) == sf::Socket::Status::Done) {
 			std::size_t readPos = 0;
 
+			uint8_t flags = NORMAL_PACKET;
+			std::memcpy(&flags, buffer + readPos, sizeof(flags));
+			readPos += sizeof(flags);
+
 			udpPacketType packetType;
 			std::memcpy(&packetType, buffer + readPos, sizeof(packetType));
 			readPos += sizeof(packetType);
@@ -535,7 +539,7 @@ void PacketManager::SendMovement(float x, float y, unsigned int movementID) {
 
 	udpPacketType packetType = udpPacketType::MOVEMENT;
 	movementPacketType movementType = movementPacketType::SEND_RAW_MOVEMENT;
-	char flags = 0;
+	uint8_t flags = NORMAL_PACKET;
 
 	std::memcpy(buffer + bufferDataSize, &flags, sizeof(flags));
 	bufferDataSize += sizeof(flags);
@@ -580,7 +584,7 @@ void PacketManager::SendLifeHealthUpdate(short lives, short health) {
 	std::size_t size = 0;
 
 	udpPacketType packetType = PLAYER_HEALTH_UPDATE;
-	char flags = 0;
+	uint8_t flags = NORMAL_PACKET;
 	unsigned short clientId = myIndex;
 
 	std::memcpy(buffer + size, &flags, sizeof(flags));
@@ -614,7 +618,7 @@ void PacketManager::SendPing() {
 	std::size_t size = 0;
 
 	udpPacketType packetType = PING;
-	char flags = 0;
+	uint8_t flags = NORMAL_PACKET;
 	unsigned short clientId = myIndex;
 	unsigned int pingId = lastPingId + 1;
 
@@ -642,7 +646,7 @@ void PacketManager::SendPong(unsigned int pingId) {
 	std::size_t size = 0;
 
 	udpPacketType packetType = PONG;
-	char flags = 0;
+	uint8_t flags = NORMAL_PACKET;
 	unsigned short clientId = myIndex;
 
 	std::memcpy(buffer + size, &flags, sizeof(flags));
@@ -813,7 +817,7 @@ void PacketManager::SendTaunt()
 	std::size_t size = 0;
 
 	udpPacketType packetType = TAUNT;
-	char flags = 0;
+	uint8_t flags = NORMAL_PACKET;
 	unsigned int tauntId = 0;
 
 	std::memcpy(buffer + size, &flags, sizeof(flags));
