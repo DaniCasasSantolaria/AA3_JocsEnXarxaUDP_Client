@@ -146,7 +146,7 @@ void LocalPlayer::Taunt()
 	if (!Input.GetEvent(sf::Keyboard::Key::O, KeyState::DOWN)) return;
 
 	StartTauntAnimation();
-	AUDIO->PlayClip("taunt", 0, 128);
+	AUDIO->PlayClip("taunt", 0, 35);
 	PM->SendTaunt();
 }
 

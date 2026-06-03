@@ -307,6 +307,7 @@ void PacketManager::Register(sf::Packet& data) {
 	}
 }
 
+// Respuesta de matchmaking del servidor
 void PacketManager::Matchmake(sf::Packet& data) {
 	matchMode mode;
 	matchmakeStatus status;
@@ -356,6 +357,7 @@ void PacketManager::Matchmake(sf::Packet& data) {
 	}
 }
 
+// Respuesta del servidor a la solicitud de mapa, actualiza el mapa local si es necesario y guarda la nueva version
 void PacketManager::HandleMapRequest(sf::Packet& packet) {
 	short requestTypeValue;
 	packet >> requestTypeValue;
@@ -382,6 +384,7 @@ void PacketManager::HandleMapRequest(sf::Packet& packet) {
 	}
 }
 
+// Procesa datos de movimiento recibidos del servidor, si es local lo guarda para validacion, si es de un jugador online lo guarda para interpolacion
 void PacketManager::HandleMovement(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
 	movementPacketType movementType;
 	std::memcpy(&movementType, buffer + readPos, sizeof(movementType));
@@ -424,6 +427,7 @@ void PacketManager::HandleMovement(const char* buffer, std::size_t receivedSize,
 	}
 }
 
+// Procesa datos de actualizacion de vida y salud del enemigo recibidos del servidor, los almacena para actualizar el estado del enemigo en el juego
 void PacketManager::HandleEnemyHealthUpdate(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
 	EnemyHealthUpdate update;
 
@@ -465,6 +469,7 @@ void PacketManager::SendRegisterRequest(const std::string& username, const std::
 	}
 }
 
+// Envia solicitud de matchmaking al servidor con el modo de juego seleccionado
 void PacketManager::SendMatchmakeRequest(matchMode mode) {
 	hideAllButtons = true;
 
@@ -482,6 +487,7 @@ void PacketManager::SendMatchmakeRequest(matchMode mode) {
 	}
 }
 
+// Envia solicitud de mapa al servidor con la version del mapa local para comprobar si es necesario actualizarlo
 void PacketManager::RequestMap() {
 	unsigned short localVersion = LoadLocalMapVersion();
 
@@ -493,6 +499,7 @@ void PacketManager::RequestMap() {
 	}
 }
 
+// Carga la version del mapa local desde un archivo de texto
 unsigned short PacketManager::LoadLocalMapVersion() {
 	std::ifstream file("resources/Maps/map_version.txt");
 
@@ -505,6 +512,7 @@ unsigned short PacketManager::LoadLocalMapVersion() {
 	return version;
 }
 
+// Guarda el mapa en local, sobreescribiendo el mapa anterior
 void PacketManager::SaveLocalMap(const std::string& mapContent) {
 	std::ofstream file("resources/Maps/Map.txt");
 
@@ -516,6 +524,7 @@ void PacketManager::SaveLocalMap(const std::string& mapContent) {
 	file << mapContent;
 }
 
+// Guarda la verison del mapa i sobreescribe la version anterior
 void PacketManager::SaveLocalMapVersion(unsigned short version) {
 	std::ofstream file("resources/Maps/map_version.txt");
 
@@ -554,6 +563,7 @@ void PacketManager::RankingRequest() {
 	}
 }
 
+// Envio datos movimiento al servidor
 void PacketManager::SendMovement(float x, float y, unsigned int movementID) {
 	char buffer[BUFFER_SIZE];
 	std::size_t bufferDataSize = 0;
@@ -588,18 +598,21 @@ void PacketManager::SendMovement(float x, float y, unsigned int movementID) {
 	}
 }
 
+// Devuelve el siguiente movimiento online pendiente de procesar, lo elimina de la cola de movimientos pendientes
 PacketManager::OnlineMovement PacketManager::PopPendingOnlineMovement() {
 	OnlineMovement movement = pendingOnlineMovements.front();
 	pendingOnlineMovements.pop();
 	return movement;
 }
 
+// Devuelve la siguiente validacion local pendiente de procesar, lo elimina de la cola de validaciones pendientes
 PacketManager::LocalValidation PacketManager::PopPendingLocalValidation() {
 	LocalValidation validation = pendingLocalValidations.front();
 	pendingLocalValidations.pop();
 	return validation;
 }
 
+// Envia actualizacion de vida y salud del jugador al servidor
 void PacketManager::SendLifeHealthUpdate(short lives, short health) {
 	char buffer[BUFFER_SIZE];
 	std::size_t size = 0;
@@ -628,12 +641,14 @@ void PacketManager::SendLifeHealthUpdate(short lives, short health) {
 	}
 }
 
+// Devuelve la siguiente actualizacion de vida y salud del enemigo pendiente de procesar, lo elimina de la cola de actualizaciones pendientes
 PacketManager::EnemyHealthUpdate PacketManager::PopPendingEnemyHealthUpdate() {
 	EnemyHealthUpdate update = pendingEnemyHealthUpdates.front();
 	pendingEnemyHealthUpdates.pop();
 	return update;
 }
 
+// Envia un ping al servidor, actualiza el estado de espera de pong y el tiempo del ultimo ping enviado
 void PacketManager::SendPing() {
 	char buffer[BUFFER_SIZE];
 	std::size_t size = 0;
@@ -662,6 +677,7 @@ void PacketManager::SendPing() {
 	}
 }
 
+// Envia un pong al servidor en respuesta a un ping, incluye el ID del ping para que el servidor pueda identificar a que ping responde
 void PacketManager::SendPong(unsigned int pingId) {
 	char buffer[BUFFER_SIZE];
 	std::size_t size = 0;
@@ -687,6 +703,7 @@ void PacketManager::SendPong(unsigned int pingId) {
 	}
 }
 
+// Procesa un ping recibido del servidor, si el ping es para este cliente responde con un pong, actualiza el tiempo del ultimo paquete UDP recibido y el estado de espera de pong
 void PacketManager::HandlePing(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
 	unsigned short clientId = 0;
 	unsigned int pingId = 0;
@@ -706,6 +723,8 @@ void PacketManager::HandlePing(const char* buffer, std::size_t receivedSize, std
 	SendPong(pingId);
 }
 
+// Procesa un pong recibido del servidor, si el pong es para este cliente y corresponde al ultimo ping enviado 
+// actualiza el tiempo del ultimo paquete UDP recibido y el estado de espera de pong
 void PacketManager::HandlePong(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
 	unsigned short clientId = 0;
 	unsigned int pingId = 0;
@@ -723,6 +742,8 @@ void PacketManager::HandlePong(const char* buffer, std::size_t receivedSize, std
 	waitingPong = false;
 }
 
+// Actualiza el sistema de ping, si ha pasado demasiado tiempo desde el ultimo lo desconecta, 
+// si ha pasado un tiempo desde el ultimo ping enviado y no se ha recibido un pong se envia otro ping
 void PacketManager::UpdatePingSystem() {
 	float currentTime = udpClock.getElapsedTime().asSeconds();
 	float timeSinceLastPacket = currentTime - lastUdpPacketTime;
@@ -745,6 +766,7 @@ void PacketManager::UpdatePingSystem() {
 	}
 }
 
+// Procesa la desconexion de un jugador, actualiza el estado de conexion UDP, limpia las colas de paquetes pendientes y vuelve al lobby
 void PacketManager::HandleDisconnectedPlayer(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
 	unsigned short disconnectedClientId = 0;
 
@@ -764,6 +786,7 @@ void PacketManager::HandleDisconnectedPlayer(const char* buffer, std::size_t rec
 	SM.SetNextScene("Lobby");
 }
 
+// Procesa una advertencia de irregularidad recibida del servidor
 void PacketManager::HandleIrregularityWarning(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
 	unsigned short clientId = 0;
 	unsigned int movementID = 0;
@@ -796,6 +819,7 @@ void PacketManager::HandleIrregularityWarning(const char* buffer, std::size_t re
 	std::cout << "Irregularidad detectada: " << irregularityCount << "/3" << std::endl;
 }
 
+// Envia un paquete de hit
 void PacketManager::SendHit() {
 	char buffer[BUFFER_SIZE];
 	std::size_t size = 0;
@@ -817,6 +841,7 @@ void PacketManager::SendHit() {
 	}
 }
 
+// Procesa un paquete de hit recibido
 void PacketManager::HandleHit(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
 	unsigned short targetPlayerId = 0;
 	std::memcpy(&targetPlayerId, buffer + readPos, sizeof(targetPlayerId));
@@ -826,12 +851,14 @@ void PacketManager::HandleHit(const char* buffer, std::size_t receivedSize, std:
 	pendingHitConfirmations.push(hitData);
 }
 
+// Devuelve la siguiente confirmacion de hit pendiente de procesar, lo elimina de la cola de confirmaciones pendientes
 PacketManager::HitConfirmedData PacketManager::PopPendingHitConfirmation() {
 	HitConfirmedData hitData = pendingHitConfirmations.front();
 	pendingHitConfirmations.pop();
 	return hitData;
 }
 
+// Envia un paquete de taunt
 void PacketManager::SendTaunt() {
 	char buffer[BUFFER_SIZE];
 	std::size_t size = 0;
@@ -858,6 +885,7 @@ void PacketManager::SendTaunt() {
 	tauntId++;
 }
 
+// Procesa un paquete de taunt recibido, si el taunt es de otro jugador reproduce el sonido y aumenta el contador de taunts pendientes
 void PacketManager::HandleTaunt(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
 	unsigned short clientIdReceived = 0;
 	unsigned int tauntIdReceived = 0;
@@ -873,6 +901,7 @@ void PacketManager::HandleTaunt(const char* buffer, std::size_t receivedSize, st
 	pendingTauntCount++;
 }
 
+// Envia un paquete de shoot con la posicion de spawn y la direccion del disparo
 void PacketManager::SendShoot(float spawnX, float spawnY, float directionX, float directionY) {
 	char buffer[BUFFER_SIZE];
 	std::size_t size = 0;
@@ -894,6 +923,7 @@ void PacketManager::SendShoot(float spawnX, float spawnY, float directionX, floa
 	}
 }
 
+// Procesa un paquete de shoot recibido, si el disparo es de otro jugador lo almacena para crear el proyectil en el juego
 void PacketManager::HandleShoot(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
 	unsigned short shooterNetworkId = 0;
 
@@ -908,6 +938,7 @@ void PacketManager::HandleShoot(const char* buffer, std::size_t receivedSize, st
 	pendingShoots.push(shootData);
 }
 
+// Envia un paquete de confirmacion de un paquete critico recibido, incluye el ID del paquete critico para que el servidor sepa que paquete se esta confirmando
 void PacketManager::SendCriticalAck(unsigned short criticalPacketId) {
 	char buffer[BUFFER_SIZE];
 	std::size_t size = 0;
@@ -932,6 +963,8 @@ void PacketManager::SendCriticalAck(unsigned short criticalPacketId) {
 	}
 }
 
+// Procesa un paquete de confirmacion de un paquete critico recibido, si la confirmacion es para este cliente y 
+// corresponde a un paquete critico pendiente lo procesa segun el tipo de paquete critico confirmado
 void PacketManager::HandleCriticalConfirmed(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
 	udpPacketType originalPacketType;
 	unsigned short senderClientId = 0;
@@ -957,13 +990,15 @@ void PacketManager::HandleCriticalConfirmed(const char* buffer, std::size_t rece
 	}
 }
 
-
+// Devuelve el siguiente disparo pendiente de procesar, lo elimina de la cola de disparos pendientes
 PacketManager::ShootData PacketManager::PopPendingShoot() {
 	ShootData shootData = pendingShoots.front();
 	pendingShoots.pop();
 	return shootData;
 }
 
+// Procesa un paquete de finalizacion de partida recibido, actualiza el resultado y motivo de finalizacion de la ultima partida, 
+// el estado de recepcion de la finalizacion de partida y desconecta del servidor UDP
 void PacketManager::HandleMatchFinished(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
 	unsigned short resultValue = 0;
 	unsigned short reasonValue = 0;
