@@ -1,0 +1,349 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AABB.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Game.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Gameplay.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MainMenu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Rigidbody.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SplashScreen.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Elements\Bullet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Elements\Explosion.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Gameplay\GridBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Managers\InputManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Managers\PacketManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Managers\RenderManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Managers\TimeManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MenuElements\Button.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MenuElements\SpriteSelectorImage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MenuElements\VolumeButton.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="player\Player.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\AnimatedImageRenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\ImageRenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scenes\GameplaySpaceship.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scenes\Lobby.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scenes\Login.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scenes\RankingScreen.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Maps\TileMap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="player\LocalPlayer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="player\OnlinePlayer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AABB.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Game.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Gameplay.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ImageObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MainMenu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Object.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Rigidbody.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Score.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Spawner.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SplashScreen.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TextObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Transform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="actions\Damageable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="actions\Movement.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="actions\Shooting.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Elements\Bullet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Elements\Explosion.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Gameplay\GridBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Managers\AudioManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Managers\InputManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Managers\PacketManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Managers\RenderManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Managers\SceneManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Managers\TimeManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MenuElements\Button.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MenuElements\SpriteSelectorImage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MenuElements\VolumeButton.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="player\Player.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\AnimatedImageRenderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\ImageRenderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Renderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\TextRenderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scenes\GameplaySpaceship.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scenes\Lobby.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scenes\Login.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scenes\RankingScreen.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GravityObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Maps\TileMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="player\LocalPlayer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="player\OnlinePlayer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="resources\Audio\sfx\hover.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="resources\fonts\ScienceGothic-Regular.ttf" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="resources\Lobby\create-button.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Lobby\join-button.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Lobby\lobby-button.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Lobby\ranking-button.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Login\Fondo.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Login\Fondo_clean.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Login\hide.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Login\login-button.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Login\Password-button.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Login\register-button.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Login\show.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Login\user-button.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Ranking\back-button.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Tres.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Gameplay\TrianglePlayerRectangle.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Gameplay\Circle.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Gameplay\CirclePlayerRectangle.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Gameplay\Cross.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Gameplay\CrossPlayerRectangle.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Gameplay\GameplayBackground.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Gameplay\Grid.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Gameplay\GridBackground.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Gameplay\GridCircle.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Gameplay\GridCross.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Gameplay\GridSquare.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Gameplay\GridTriangle.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Gameplay\Square.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Gameplay\SquarePlayerRectangle.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\Gameplay\Triangle.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="x64\Release\UDP_Client.tlog\CL.command.1.tlog" />
+    <None Include="x64\Release\UDP_Client.tlog\Cl.items.tlog" />
+    <None Include="x64\Release\UDP_Client.tlog\CL.read.1.tlog" />
+    <None Include="x64\Release\UDP_Client.tlog\CL.write.1.tlog" />
+    <None Include="x64\Release\UDP_Client.tlog\link.command.1.tlog" />
+    <None Include="x64\Release\UDP_Client.tlog\link.read.1.tlog" />
+    <None Include="x64\Release\UDP_Client.tlog\link.secondary.1.tlog" />
+    <None Include="x64\Release\UDP_Client.tlog\link.write.1.tlog" />
+    <None Include="x64\Release\UDP_Client.tlog\UDP_Client.lastbuildstate" />
+    <None Include="x64\Release\UDP_Client.exe.recipe" />
+    <None Include="x64\Release\UDP_Client.iobj" />
+    <None Include="x64\Release\UDP_Client.ipdb" />
+    <None Include="x64\Release\vc143.pdb" />
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="x64\Release\main.obj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="x64\Release\UDP_Client.log" />
+  </ItemGroup>
+</Project>

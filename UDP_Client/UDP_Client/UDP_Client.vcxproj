@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{f53ff7c8-4301-4751-b25a-e8a2459e6fd4}</ProjectGuid>
+    <RootNamespace>UDPClient</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)\Dependencies\include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Dependencies\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sfml-graphics-d.lib;sfml-window-d.lib;sfml-audio-d.lib;sfml-network-d.lib;sfml-system-d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)\Dependencies\include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Dependencies\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sfml-graphics.lib;sfml-window.lib;sfml-audio.lib;sfml-network.lib;sfml-system.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="AABB.cpp" />
+    <ClCompile Include="Elements\Bullet.cpp" />
+    <ClCompile Include="Elements\Explosion.cpp" />
+    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="Gameplay.cpp" />
+    <ClCompile Include="Gameplay\GridBox.cpp" />
+    <ClCompile Include="player\OnlinePlayer.cpp" />
+    <ClCompile Include="player\LocalPlayer.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="MainMenu.cpp" />
+    <ClCompile Include="Managers\InputManager.cpp" />
+    <ClCompile Include="Managers\PacketManager.cpp" />
+    <ClCompile Include="Managers\RenderManager.cpp" />
+    <ClCompile Include="Managers\TimeManager.cpp" />
+    <ClCompile Include="MenuElements\Button.cpp" />
+    <ClCompile Include="MenuElements\SpriteSelectorImage.cpp" />
+    <ClCompile Include="MenuElements\VolumeButton.cpp" />
+    <ClCompile Include="player\Player.cpp" />
+    <ClCompile Include="Renderer\AnimatedImageRenderer.cpp" />
+    <ClCompile Include="Renderer\ImageRenderer.cpp" />
+    <ClCompile Include="Rigidbody.cpp" />
+    <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="scenes\GameplaySpaceship.cpp" />
+    <ClCompile Include="scenes\Lobby.cpp" />
+    <ClCompile Include="scenes\Login.cpp" />
+    <ClCompile Include="scenes\RankingScreen.cpp" />
+    <ClCompile Include="SplashScreen.cpp" />
+    <ClCompile Include="Maps\TileMap.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AABB.h" />
+    <ClInclude Include="actions\Damageable.h" />
+    <ClInclude Include="actions\Movement.h" />
+    <ClInclude Include="actions\Shooting.h" />
+    <ClInclude Include="Elements\Bullet.h" />
+    <ClInclude Include="Elements\Explosion.h" />
+    <ClInclude Include="Game.h" />
+    <ClInclude Include="Gameplay.h" />
+    <ClInclude Include="Gameplay\GridBox.h" />
+    <ClInclude Include="GravityObject.h" />
+    <ClInclude Include="ImageObject.h" />
+    <ClInclude Include="player\OnlinePlayer.h" />
+    <ClInclude Include="player\LocalPlayer.h" />
+    <ClInclude Include="MainMenu.h" />
+    <ClInclude Include="Managers\AudioManager.h" />
+    <ClInclude Include="Managers\InputManager.h" />
+    <ClInclude Include="Managers\PacketManager.h" />
+    <ClInclude Include="Managers\RenderManager.h" />
+    <ClInclude Include="Managers\SceneManager.h" />
+    <ClInclude Include="Managers\TimeManager.h" />
+    <ClInclude Include="MenuElements\Button.h" />
+    <ClInclude Include="MenuElements\SpriteSelectorImage.h" />
+    <ClInclude Include="MenuElements\VolumeButton.h" />
+    <ClInclude Include="Object.h" />
+    <ClInclude Include="player\Player.h" />
+    <ClInclude Include="Renderer\AnimatedImageRenderer.h" />
+    <ClInclude Include="Renderer\ImageRenderer.h" />
+    <ClInclude Include="Renderer\Renderer.h" />
+    <ClInclude Include="Renderer\TextRenderer.h" />
+    <ClInclude Include="Rigidbody.h" />
+    <ClInclude Include="Scene.h" />
+    <ClInclude Include="scenes\GameplaySpaceship.h" />
+    <ClInclude Include="scenes\Lobby.h" />
+    <ClInclude Include="scenes\Login.h" />
+    <ClInclude Include="scenes\RankingScreen.h" />
+    <ClInclude Include="Score.h" />
+    <ClInclude Include="Spawner.h" />
+    <ClInclude Include="SplashScreen.h" />
+    <ClInclude Include="TextObject.h" />
+    <ClInclude Include="Maps\TileMap.h" />
+    <ClInclude Include="Transform.h" />
+    <ClInclude Include="Vector2.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="resources\Audio\sfx\hover.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="resources\fonts\ScienceGothic-Regular.ttf" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="resources\Gameplay\Circle.png" />
+    <Image Include="resources\Gameplay\CirclePlayerRectangle.png" />
+    <Image Include="resources\Gameplay\Cross.png" />
+    <Image Include="resources\Gameplay\CrossPlayerRectangle.png" />
+    <Image Include="resources\Gameplay\GameplayBackground.png" />
+    <Image Include="resources\Gameplay\Grid.png" />
+    <Image Include="resources\Gameplay\GridBackground.png" />
+    <Image Include="resources\Gameplay\GridCircle.png" />
+    <Image Include="resources\Gameplay\GridCross.png" />
+    <Image Include="resources\Gameplay\GridSquare.png" />
+    <Image Include="resources\Gameplay\GridTriangle.png" />
+    <Image Include="resources\Gameplay\Square.png" />
+    <Image Include="resources\Gameplay\SquarePlayerRectangle.png" />
+    <Image Include="resources\Gameplay\Triangle.png" />
+    <Image Include="resources\Gameplay\TrianglePlayerRectangle.png" />
+    <Image Include="resources\Lobby\create-button.png" />
+    <Image Include="resources\Lobby\join-button.png" />
+    <Image Include="resources\Lobby\lobby-button.png" />
+    <Image Include="resources\Lobby\ranking-button.png" />
+    <Image Include="resources\Login\Fondo.png" />
+    <Image Include="resources\Login\Fondo_clean.png" />
+    <Image Include="resources\Login\hide.png" />
+    <Image Include="resources\Login\login-button.png" />
+    <Image Include="resources\Login\Password-button.png" />
+    <Image Include="resources\Login\register-button.png" />
+    <Image Include="resources\Login\show.png" />
+    <Image Include="resources\Login\user-button.png" />
+    <Image Include="resources\Ranking\back-button.png" />
+    <Image Include="resources\Tres.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="x64\Release\UDP_Client.exe.recipe" />
+    <None Include="x64\Release\UDP_Client.iobj" />
+    <None Include="x64\Release\UDP_Client.ipdb" />
+    <None Include="x64\Release\UDP_Client.tlog\CL.command.1.tlog" />
+    <None Include="x64\Release\UDP_Client.tlog\Cl.items.tlog" />
+    <None Include="x64\Release\UDP_Client.tlog\CL.read.1.tlog" />
+    <None Include="x64\Release\UDP_Client.tlog\CL.write.1.tlog" />
+    <None Include="x64\Release\UDP_Client.tlog\link.command.1.tlog" />
+    <None Include="x64\Release\UDP_Client.tlog\link.read.1.tlog" />
+    <None Include="x64\Release\UDP_Client.tlog\link.secondary.1.tlog" />
+    <None Include="x64\Release\UDP_Client.tlog\link.write.1.tlog" />
+    <None Include="x64\Release\UDP_Client.tlog\UDP_Client.lastbuildstate" />
+    <None Include="x64\Release\vc143.pdb" />
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="x64\Release\main.obj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="x64\Release\UDP_Client.log" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
