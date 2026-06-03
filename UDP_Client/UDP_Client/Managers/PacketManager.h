@@ -85,7 +85,7 @@ struct PlayerInfo {
 };
 
 
-#define MAX_PLAYERS 2
+#define MAX_PLAYERS 4
 
 sf::Packet& operator <<(sf::Packet& packet, packetType type);
 sf::Packet& operator <<(sf::Packet& packet, authResult result);

@@ -21,8 +21,8 @@ public:
 			transform->size = Vector2(static_cast<float>(texSize.x), static_cast<float>(texSize.y));
 		}
 
-		transform->scale = Vector2(0.5f, 0.5f);
-		marginToDestroy = transform->size.x * transform->scale.x;
+		transform->scale = Vector2(direction.x < 0.0f ? -0.5f : 0.5f, 0.5f);
+		marginToDestroy = transform->size.x * std::abs(transform->scale.x);
 	}
 	void Update() override;
 	void OnCollisionEnter(Object* other) override;
