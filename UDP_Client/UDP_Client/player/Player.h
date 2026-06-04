@@ -37,6 +37,8 @@ protected:
 	float hitTimer = 0.0f;
 	const float hitDuration = 0.4f;
 
+	unsigned short tauntVolume = 35;
+
 	PlayerState currentState = PlayerState::IDLE;
 public:
 	Player() = default;

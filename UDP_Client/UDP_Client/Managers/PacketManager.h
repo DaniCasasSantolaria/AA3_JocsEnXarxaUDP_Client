@@ -89,6 +89,8 @@ struct PlayerInfo {
 #define URGENT_PACKET 0b00000001
 #define CRITIC_PACKET 0b00000010
 
+#define TAUNT_VOLUME 35
+
 #define MAX_PLAYERS 2
 
 #define BUFFER_SIZE 1024
@@ -113,7 +115,7 @@ class PacketManager {
 private:
     // Constantes de configuracion de red
     unsigned const short LISTENER_PORT = 55007; // Port
-    const sf::IpAddress SERVER_IP = sf::IpAddress(10, 8, 0, 3); // IP TCP
+    const sf::IpAddress SERVER_IP = sf::IpAddress(10, 40, 2, 189); // IP TCP
 
     // TCP Sockets de comunicacion
     sf::TcpSocket socket;
@@ -121,7 +123,7 @@ private:
     //UDP
     unsigned const short UDP_SERVER_PORT = 55008;
     unsigned const short UDP_CLIENT_PORT = 55009;
-    const sf::IpAddress UDP_SERVER_IP = sf::IpAddress(10, 8, 0, 2); // IP UDP
+    const sf::IpAddress UDP_SERVER_IP = sf::IpAddress(10, 40, 1, 214); // IP UDP
     sf::UdpSocket udpSocket;
     bool udpConnected = false;
 
