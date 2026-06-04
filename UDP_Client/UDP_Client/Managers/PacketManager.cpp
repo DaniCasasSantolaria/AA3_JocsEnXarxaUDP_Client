@@ -155,9 +155,7 @@ void PacketManager::Update() {
 			bool isDuplicate = false;
 			if (flags & CRITIC_PACKET) {
 				unsigned short criticalPacketId = 0;
-				if (readPos + sizeof(criticalPacketId) > receivedSize) {
-					continue;
-				}
+
 				std::memcpy(&criticalPacketId, buffer + readPos, sizeof(criticalPacketId));
 				readPos += sizeof(criticalPacketId);
 
@@ -897,7 +895,7 @@ void PacketManager::HandleTaunt(const char* buffer, std::size_t receivedSize, st
 
 	if (clientIdReceived == myIndex) return;
 
-	AUDIO->PlayClip("taunt", 0, 35);
+	AUDIO->PlayClip("taunt", 0, TAUNT_VOLUME);
 	pendingTauntCount++;
 }
 
@@ -968,9 +966,6 @@ void PacketManager::SendCriticalAck(unsigned short criticalPacketId) {
 void PacketManager::HandleCriticalConfirmed(const char* buffer, std::size_t receivedSize, std::size_t readPos) {
 	udpPacketType originalPacketType;
 	unsigned short senderClientId = 0;
-
-	if (readPos + sizeof(originalPacketType) + sizeof(senderClientId) > receivedSize)
-		return;
 
 	std::memcpy(&originalPacketType, buffer + readPos, sizeof(originalPacketType));
 	readPos += sizeof(originalPacketType);
